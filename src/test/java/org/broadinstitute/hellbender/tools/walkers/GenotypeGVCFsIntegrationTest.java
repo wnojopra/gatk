@@ -20,10 +20,14 @@ import org.broadinstitute.hellbender.testutils.VariantContextTestUtils;
 import org.broadinstitute.hellbender.tools.genomicsdb.GenomicsDBArgumentCollection;
 import org.broadinstitute.hellbender.tools.genomicsdb.GenomicsDBImport;
 import org.broadinstitute.hellbender.tools.walkers.annotator.RMSMappingQuality;
+import org.broadinstitute.hellbender.utils.GATKProtectedVariantContextUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
 import org.broadinstitute.hellbender.utils.runtime.ProcessController;
+import org.broadinstitute.hellbender.testutils.ArgumentsBuilder;
+import org.broadinstitute.hellbender.testutils.GenomicsDBTestUtils;
+import org.broadinstitute.hellbender.testutils.VariantContextTestUtils;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.VariantContextGetters;
 import org.testng.Assert;
@@ -530,24 +534,7 @@ public class GenotypeGVCFsIntegrationTest extends CommandLineProgramTest {
         List<VariantContext> results = VariantContextTestUtils.getVariantContexts(output);
         //there are only about 25 VCs here so we can read them all into memory
         for (final VariantContext vc : results) {
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_RAW_RMS_MAPPING_QUALITY_KEY,
-                    VCFHeaderLineCount.R);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_RMS_MAPPING_QUALITY_KEY,
-                    VCFHeaderLineCount.A, false);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_RAW_MAP_QUAL_RANK_SUM_KEY,
-                    VCFHeaderLineCount.R);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_MAP_QUAL_RANK_SUM_KEY,
-                    VCFHeaderLineCount.A, false);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_RAW_READ_POS_RANK_SUM_KEY,
-                    VCFHeaderLineCount.R);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_READ_POS_RANK_SUM_KEY,
-                    VCFHeaderLineCount.A, false);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_SB_TABLE_KEY,
-                    VCFHeaderLineCount.R);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_FISHER_STRAND_KEY,
-                    VCFHeaderLineCount.A, false);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(vc, GATKVCFConstants.AS_STRAND_ODDS_RATIO_KEY,
-                    VCFHeaderLineCount.A, false);
+            GATKVariantContextUtils.assertAlleleSpecificAnnotationsHaveCorrectLength(vc);
         }
 
     }

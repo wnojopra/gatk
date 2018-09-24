@@ -245,7 +245,7 @@ public final class GnarlyGenotyper extends VariantWalker {
 
         vcfWriter = createVCFWriter(outputFile);
         if (outputDbName != null) {
-            annotationDatabaseWriter = createVCFWriter(new File(outputDbName));
+            annotationDatabaseWriter = createVCFWriter(new File(outputDbName).toPath(), true);
         }
 
         final Set<String> sampleNameSet = samples.asSetOfSamples();
