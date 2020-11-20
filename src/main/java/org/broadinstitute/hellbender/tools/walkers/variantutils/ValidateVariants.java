@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.variantutils;
 
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.tribble.TribbleException;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -13,6 +12,7 @@ import org.broadinstitute.barclay.argparser.ArgumentCollection;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.DbsnpArgumentCollection;
+import org.broadinstitute.hellbender.tools.walkers.gnarlyGenotyper.GnarlyGenotyper;
 import org.broadinstitute.hellbender.utils.logging.OneShotLogger;
 import org.broadinstitute.hellbender.utils.variant.GATKVariantContextUtils;
 import picard.cmdline.programgroups.VariantEvaluationProgramGroup;
@@ -23,9 +23,7 @@ import org.broadinstitute.hellbender.engine.VariantWalker;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.*;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
-import shaded.cloud_nio.com.google.errorprone.annotations.Var;
 
-import javax.xml.bind.annotation.XmlType;
 import java.util.*;
 
 
@@ -185,8 +183,6 @@ public final class ValidateVariants extends VariantWalker {
      */
     boolean[] validationsToPerform;
 
-    ValidationType currentType = null;
-
     @ArgumentCollection
     DbsnpArgumentCollection dbsnp = new DbsnpArgumentCollection();
 
@@ -231,11 +227,20 @@ public final class ValidateVariants extends VariantWalker {
             mutex = DO_NOT_VALIDATE_FILTERED_RECORDS)
     Boolean VALIDATE_GVCF = false;
 
+    /**
+     * If using VQSR validation, validate the subset of annotations used for exomes
+     */
     @Argument(fullName = "exome-input",
             shortName = "exome",
             doc = "Validate this file against expected annotations for VQSR for exomes",
             optional = true)
     Boolean EXOME_INPUT = false;
+
+    @Argument(fullName = "max-alt-alleles",
+            shortName = "max-alt-alleles",
+            doc = "Maximum number of alt alleles for which PLs should be reported; used in GNARLY_INPUT validation mode",
+            optional = true)
+    int MAX_ALT_ALLELES = 5;
 
     private GenomeLocSortedSet genomeLocSortedSet;
 
@@ -243,12 +248,6 @@ public final class ValidateVariants extends VariantWalker {
     private SimpleInterval previousInterval;
     private int previousStart = -1;
     private String previousContig = null;
-
-    @Argument(fullName = "max-alt-alleles",
-            shortName = "max-alt-alleles",
-            doc = "Maximum number of alt alleles for which PLs should be reported; used in GNARLY_INPUT validation mode",
-            optional = true)
-    int MAX_ALT_ALLELES = 5;
 
     private static final List<String> requiredVQSRAnnotationKeys = Arrays.asList("MQ", "QD", "MQRankSum", "ReadPosRankSum", "FS", "SOR");  //DP is not required for exomes
     private static final List<String> requiredRawVQSRAnnotationKeys = Arrays.asList("RAW_MQandDP", "MQRankSum", "ReadPosRankSum");  //DP is not required for exomes
@@ -323,12 +322,7 @@ public final class ValidateVariants extends VariantWalker {
             previousStart = vc.getStart();
             validateGVCFVariant(vc);
         }
-
-        try{
-            applyValidationType(vc, reportedRefAllele, observedRefAllele, rsIDs);
-        } catch (TribbleException e) {
-            throwOrWarn(new UserException.FailsStrictValidation(drivingVariantFile, currentType, e.getMessage()));
-        }
+        applyValidations(vc, reportedRefAllele, observedRefAllele, rsIDs);
     }
 
     @Override
@@ -357,7 +351,7 @@ public final class ValidateVariants extends VariantWalker {
     /*
      *  Returns the list of RSIDs overlapping the current variant that we're walking over.
      *  If there's no RSID or if there was not dbsnp file passed in as an argument,
-     *  an empty set is returned (and then no validation is performed, see applyValidationType.
+     *  an empty set is returned (and then no validation is performed, see applyValidations.
      */
     private Set<String> getRSIDs(FeatureContext featureContext) {
         Set<String> rsIDs = new LinkedHashSet<>();
@@ -376,8 +370,8 @@ public final class ValidateVariants extends VariantWalker {
     private boolean[] calculateValidationTypesToApply(final List<ValidationType> excludeTypes) {
 
         //creates local, temp list so that original list provided by user doesn't get modified
-        List<ValidationType> excludeTypesTemp = new ArrayList<>(excludeTypes);
-        Set<ValidationType> includeTypes;
+        final List<ValidationType> excludeTypesTemp = new ArrayList<>(excludeTypes);
+        final Set<ValidationType> includeTypes;
         if (VALIDATE_GVCF && !excludeTypesTemp.contains(ValidationType.ALLELES)) {
             // Note: in a future version allele validation might be OK for GVCFs, if that happens
             // this will be more complicated.
@@ -449,84 +443,100 @@ public final class ValidateVariants extends VariantWalker {
         }
     }
 
-    private void applyValidationType(VariantContext vc, Allele reportedRefAllele, Allele observedRefAllele, Set<String> rsIDs) {
+    /**
+     * May be run on GVCFs to ensure that single-sample pipeline outputs have required data for genotyping and filtering
+     * @param vc
+     */
+    private void validateVQSRInputs(final VariantContext vc) {
+        if (vc.isReferenceBlock() && !VALIDATE_GVCF) {
+            final UserException e = new UserException.BadInput("VQSR should not be run on GVCFs.  Encountered a reference block at " +
+                    vc.getContig() + ":" + vc.getStart() + " during VQSR input validation.");
+            throwOrWarn(e);
+        }
+        if (vc.isFiltered()) {
+            return;
+        }
+        if (!EXOME_INPUT) {
+            checkForAnnotation(vc, VCFConstants.DEPTH_KEY);
+        }
+        boolean hasHetCall = false;
+        if (vc.hasGenotypes()) {
+            for (final Genotype g : vc.getGenotypes()) {
+                if (g.isHet() && !g.isHetNonRef()) {
+                    hasHetCall = true;
+                    break;
+                }
+            }
+        } else {
+            oneShotLogger.warn("No genotypes are present for variant at "
+                    + vc.getContig() + ":" + vc.getStart() + "-- will not validate the existence of RankSum annotations");
+        }
+        if (VALIDATE_GVCF) {
+            validateRequiredRawVQSRAnnotations(vc, hasHetCall);
+            if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+                validateRequiredRawASVQSRAnnotations(vc, hasHetCall);
+            }
+        } else {
+            validateRequiredVQSRAnnotations(vc, hasHetCall);
+            if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+                validateRequiredASVQSRAnnotations(vc, hasHetCall);
+            }
+        }
+    }
+
+    private void applyValidations(final VariantContext vc, final Allele reportedRefAllele, final Allele observedRefAllele, final Set<String> rsIDs) {
         // Note: VariantContext.validateRSIDs blows up on an empty list (but works fine with null).
         // The workaround is to not pass an empty list.
-       if(validationsToPerform[ValidationType.REF.ordinal()]) {
-           if (hasReference()) {
-               currentType = ValidationType.REF;
-               vc.validateReferenceBases(reportedRefAllele, observedRefAllele);
-           }
-       }
-       if (validationsToPerform[ValidationType.IDS.ordinal()]) {
-           if (!rsIDs.isEmpty()) {
-               currentType = ValidationType.IDS;
-               vc.validateRSIDs(rsIDs);
-           }
-       }
-       if (validationsToPerform[ValidationType.ALLELES.ordinal()]) {
-           currentType = ValidationType.ALLELES;
-           vc.validateAlternateAlleles();
-       }
-       if (validationsToPerform[ValidationType.CHR_COUNTS.ordinal()]) {
-           currentType = ValidationType.CHR_COUNTS;
-           vc.validateChromosomeCounts();
-       }
-       if (validationsToPerform[ValidationType.GNARLY_INPUT.ordinal()]) {
-           currentType = ValidationType.GNARLY_INPUT;
-           validateGnarlyAnnotations(vc);
-           validateGnarlyGenotypes(vc);
-       }
-       if (validationsToPerform[ValidationType.VQSR_INPUT.ordinal()]) {
-           currentType = ValidationType.VQSR_INPUT;
-           if (vc.isReferenceBlock()) {
-               return;
-           }
-           if (vc.isFiltered()) {
-               return;
-           }
-           if (!EXOME_INPUT) {
-               checkForAnnotation(vc, VCFConstants.DEPTH_KEY);
-           }
-           boolean hasHetCall = false;
-           if (vc.hasGenotypes()) {
-               for (final Genotype g : vc.getGenotypes()) {
-                   if (g.isHet() && !g.isHetNonRef()) {
-                       hasHetCall = true;
-                       break;
-                   }
-               }
-           } else {
-               oneShotLogger.warn("No genotypes are present for variant -- will not validate the existence of RankSum annotations");
-           }
-           if (VALIDATE_GVCF) {
-               validateRequiredRawVQSRAnnotations(vc, hasHetCall);
-               if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-                   validateRequiredRawASVQSRAnnotations(vc, hasHetCall);
-               }
-           } else {
-               validateRequiredVQSRAnnotations(vc, hasHetCall);
-               if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-                   validateRequiredASVQSRAnnotations(vc, hasHetCall);
+       ValidationType currentType = null;
+
+       try {
+           if (validationsToPerform[ValidationType.REF.ordinal()]) {
+               if (hasReference()) {
+                   currentType = ValidationType.REF;
+                   vc.validateReferenceBases(reportedRefAllele, observedRefAllele);
                }
            }
-       }
-       if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-           currentType = ValidationType.AS_ANNOTATIONS;
-           validateAlleleSpecificAnnotations(vc);
+           if (validationsToPerform[ValidationType.IDS.ordinal()]) {
+               if (!rsIDs.isEmpty()) {
+                   currentType = ValidationType.IDS;
+                   vc.validateRSIDs(rsIDs);
+               }
+           }
+           if (validationsToPerform[ValidationType.ALLELES.ordinal()]) {
+               currentType = ValidationType.ALLELES;
+               vc.validateAlternateAlleles();
+           }
+           if (validationsToPerform[ValidationType.CHR_COUNTS.ordinal()]) {
+               currentType = ValidationType.CHR_COUNTS;
+               vc.validateChromosomeCounts();
+           }
+           if (validationsToPerform[ValidationType.GNARLY_INPUT.ordinal()]) {
+               currentType = ValidationType.GNARLY_INPUT;
+               validateGnarlyOutputs(vc);
+           }
+           if (validationsToPerform[ValidationType.VQSR_INPUT.ordinal()]) {
+               currentType = ValidationType.VQSR_INPUT;
+               validateVQSRInputs(vc);
+           }
+           if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+               currentType = ValidationType.AS_ANNOTATIONS;
+               validateAlleleSpecificAnnotations(vc);
+           }
+       } catch (final UserException e) {
+           final UserException withVC = new UserException.FailsStrictValidation(drivingVariantFile, currentType,
+                   e.getMessage() + "Failure at variant context: " + vc.toStringWithoutGenotypes());
+           throwOrWarn(withVC);
        }
     }
 
     private void validateGnarlyAnnotations(final VariantContext vc) {
-        checkForAnnotation(vc, GATKVCFConstants.FISHER_STRAND_KEY);
-        checkForAnnotation(vc, VCFConstants.DEPTH_KEY);
-        checkForAnnotation(vc, VCFConstants.ALLELE_COUNT_KEY);
-        checkForAnnotation(vc, VCFConstants.ALLELE_NUMBER_KEY);
-        checkForAnnotation(vc, GATKVCFConstants.STRAND_ODDS_RATIO_KEY);
-        checkForAnnotation(vc, VCFConstants.RMS_MAPPING_QUALITY_KEY);
-        checkForAnnotation(vc, GATKVCFConstants.EXCESS_HET_KEY);
+        for (final String ann : GnarlyGenotyper.GNARLY_EXPECTED_OUTPUT_ANNOTATIONS) {
+            checkForAnnotation(vc, ann);
+        }
         if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-            checkForAnnotation(vc, GATKVCFConstants.AS_QUAL_KEY);
+            for (final String ann : GnarlyGenotyper.GNARLY_EXPECTED_AS_OUTPUT_ANNOTATIONS) {
+                checkForAnnotation(vc, ann);
+            }
         }
     }
 
@@ -537,6 +547,11 @@ public final class ValidateVariants extends VariantWalker {
         }
     }
 
+    private void validateGnarlyOutputs(final VariantContext vc) {
+        validateGnarlyAnnotations(vc);
+        validateGnarlyGenotypes(vc);
+    }
+
     private void validateGnarlyGenotypes(final VariantContext vc) {
         final int nObservedAlts = vc.getNAlleles() - 1;
         final boolean shouldHavePLs = nObservedAlts <= MAX_ALT_ALLELES;
@@ -545,20 +560,20 @@ public final class ValidateVariants extends VariantWalker {
                 break;
             }
             if (!g.isHomRef()) {
-                validateRequiredGTAttributes(g, vc);
+                validateRequiredGnarlyVariantGTAttributes(g, vc);
             }
             if (shouldHavePLs) {
-                validateAdditionalGTAttributes(g, vc);
+                validateAdditionalGnarlyGTAttributes(g, vc);
             }
         }
     }
 
     /**
-     * I should rename this.  AD isn't required for homRefs.  :-P
+     * Check that variant genotypes have appropriate annotations
      * @param g
-     * @param vc
+     * @param vc parent variant context, for error reporting
      */
-    private void validateRequiredGTAttributes(final Genotype g, final VariantContext vc) {
+    private void validateRequiredGnarlyVariantGTAttributes(final Genotype g, final VariantContext vc) {
         if (!g.hasAD()) {
             if (g.countAllele(Allele.SPAN_DEL) + g.countAllele(vc.getReference()) < 2) {
                 final UserException e = new UserException.BadInput("Genotype for sample " + g.getSampleName() + " is missing AD at " + vc.getContig() + ":" + vc.getStart() + " : " + g);
@@ -567,7 +582,7 @@ public final class ValidateVariants extends VariantWalker {
         }
     }
 
-    private void validateAdditionalGTAttributes(final Genotype g, final VariantContext vc) {
+    private void validateAdditionalGnarlyGTAttributes(final Genotype g, final VariantContext vc) {
         if (!g.hasPL()) {
             final UserException e = new UserException.BadInput("Genotype for sample " + g.getSampleName() + " is missing PL at " + vc.getContig() + ":" + vc.getStart() + " : " + g);
             throwOrWarn(e);

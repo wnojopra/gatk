@@ -98,10 +98,10 @@ public class HaplotypeCallerIntegrationTest extends CommandLineProgramTest {
         runCommandLine(args);
 
         final ArgumentsBuilder validateVariantsArgs = new ArgumentsBuilder()
-                .addArgument("R", referenceFileName)
-                .addArgument("V", outputPath)
-                .addArgument("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
-                .addArgument("optional-type", "VQSR_INPUT");
+                .add("R", referenceFileName)
+                .add("V", outputPath)
+                .add("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
+                .add("optional-type", "VQSR_INPUT");
         runCommandLine(validateVariantsArgs, ValidateVariants.class.getSimpleName());
 
         // Test for an exact match against past results
@@ -341,11 +341,11 @@ public class HaplotypeCallerIntegrationTest extends CommandLineProgramTest {
         runCommandLine(args);
 
         final ArgumentsBuilder validateVariantsArgs = new ArgumentsBuilder()
-                .addArgument("R", referenceFileName)
-                .addArgument("V", outputPath)
-                .addArgument("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
-                .add("-gvcf")
-                .addArgument("optional-type", "VQSR_INPUT");
+                .add("R", referenceFileName)
+                .add("V", outputPath)
+                .add("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
+                .add(ValidateVariants.GVCF_VALIDATE, true)
+                .add("optional-type", "VQSR_INPUT");
         runCommandLine(validateVariantsArgs, ValidateVariants.class.getSimpleName());
 
         // Test for an exact match against past results
@@ -423,12 +423,12 @@ public class HaplotypeCallerIntegrationTest extends CommandLineProgramTest {
         runCommandLine(args);
 
         final ArgumentsBuilder validateVariantsArgs = new ArgumentsBuilder()
-                .addArgument("R", referenceFileName)
-                .addArgument("V", outputPath)
-                .addArgument("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
-                .add("-gvcf")
-                .addArgument("optional-type", "VQSR_INPUT")
-                .addArgument("optional-type", "AS_ANNOTATIONS");
+                .add("R", referenceFileName)
+                .add("V", outputPath)
+                .add("L", IntervalUtils.locatableToString(new SimpleInterval(interval)))
+                .add(ValidateVariants.GVCF_VALIDATE, true)
+                .add("optional-type", "VQSR_INPUT")
+                .add("optional-type", "AS_ANNOTATIONS");
         runCommandLine(validateVariantsArgs, ValidateVariants.class.getSimpleName());
 
         // Test for an exact match against past results

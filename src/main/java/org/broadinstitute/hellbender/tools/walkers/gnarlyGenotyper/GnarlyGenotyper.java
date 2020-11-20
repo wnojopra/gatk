@@ -91,6 +91,17 @@ public final class GnarlyGenotyper extends VariantWalker {
 
     public static final int PIPELINE_MAX_ALT_COUNT = GenotypeCalculationArgumentCollection.DEFAULT_MAX_ALTERNATE_ALLELES;
 
+    //used by ValidateVariants -- update if more required annotations are added
+    public static final List<String> GNARLY_EXPECTED_OUTPUT_ANNOTATIONS = Arrays.asList(
+        GATKVCFConstants.FISHER_STRAND_KEY,
+        VCFConstants.DEPTH_KEY,
+        VCFConstants.ALLELE_COUNT_KEY,
+        VCFConstants.ALLELE_NUMBER_KEY,
+        GATKVCFConstants.STRAND_ODDS_RATIO_KEY,
+        VCFConstants.RMS_MAPPING_QUALITY_KEY,
+        GATKVCFConstants.EXCESS_HET_KEY);
+    public static final List<String> GNARLY_EXPECTED_AS_OUTPUT_ANNOTATIONS = Collections.singletonList(GATKVCFConstants.AS_QUAL_KEY);
+
     private static final OneShotLogger warning = new OneShotLogger(GnarlyGenotyper.class);
 
     private static final boolean SUMMARIZE_PLs = false;  //for very large numbers of samples, save on space and hail import time by summarizing PLs with genotype quality metrics

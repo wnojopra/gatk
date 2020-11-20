@@ -148,7 +148,7 @@ public class ReblockGVCFIntegrationTest extends CommandLineProgramTest {
                     VCFHeaderLineCount.R);
             GATKVariantContextUtils.assertAlleleSpecificAnnotationLengthsCorrect(a, GATKVCFConstants.AS_SB_TABLE_KEY,
                     VCFHeaderLineCount.R);
-            VariantContextTestUtils.assertAlleleSpecificAnnotationLengthsCorrect(a, GATKVCFConstants.AS_VARIANT_DEPTH_KEY,
+            GATKVariantContextUtils.assertAlleleSpecificAnnotationLengthsCorrect(a, GATKVCFConstants.AS_VARIANT_DEPTH_KEY,
                     VCFHeaderLineCount.R);
         } });
 
