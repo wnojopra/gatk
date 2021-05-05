@@ -209,8 +209,7 @@ public class FindAssemblyRegionsSpark {
                                 assemblyRegionArgs.minAssemblyRegionSize,
                                 assemblyRegionArgs.maxAssemblyRegionSize,
                                 assemblyRegionArgs.assemblyRegionPadding,
-                                assemblyRegionArgs.activeProbThreshold,
-                                assemblyRegionArgs.maxProbPropagationDistance), new com.google.common.base.Function<AssemblyRegion, ReadlessAssemblyRegion>() {
+                                assemblyRegionArgs.activeProbThreshold), new com.google.common.base.Function<AssemblyRegion, ReadlessAssemblyRegion>() {
                             @Nullable
                             @Override
                             public ReadlessAssemblyRegion apply(@Nullable AssemblyRegion input) {

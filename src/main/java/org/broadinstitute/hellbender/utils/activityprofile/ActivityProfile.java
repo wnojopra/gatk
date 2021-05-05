@@ -13,8 +13,6 @@ import java.util.*;
  */
 public class ActivityProfile {
     protected final List<ActivityProfileState> stateList;
-
-    protected final int maxProbPropagationDistance;
     protected final double activeProbThreshold;
 
     protected SimpleInterval regionStartLoc = null;
@@ -30,14 +28,12 @@ public class ActivityProfile {
 
     /**
      * Create a empty ActivityProfile, restricting output to profiles overlapping intervals, if not null
-     * @param maxProbPropagationDistance region probability propagation distance beyond its maximum size
      * @param activeProbThreshold threshold for the probability of a profile state being active
      */
-    public ActivityProfile(final int maxProbPropagationDistance, final double activeProbThreshold, final SAMFileHeader header) {
-        this.stateList = new ArrayList<>();
-        this.maxProbPropagationDistance = maxProbPropagationDistance;
+    public ActivityProfile(final double activeProbThreshold, final SAMFileHeader header) {
+        stateList = new ArrayList<>();
         this.activeProbThreshold = activeProbThreshold;
-        this.samHeader = header;
+        samHeader = header;
     }
 
     @Override
@@ -46,20 +42,6 @@ public class ActivityProfile {
                 "start=" + regionStartLoc +
                 ", stop=" + regionStopLoc +
                 '}';
-    }
-
-    /**
-     * How far away can probability mass be moved around in this profile?
-     *
-     * This distance puts an upper limit on how far, in bp, we will ever propagate probability mass around
-     * when adding a new ActivityProfileState.  For example, if the value of this function is
-     * 10, and you are looking at a state at bp 5, and we know that no states beyond 5 + 10 will have
-     * their probability propagated back to that state.
-     *
-     * @return a positive integer distance in bp
-     */
-    public int getMaxProbPropagationDistance() {
-        return maxProbPropagationDistance;
     }
 
     /**
@@ -86,63 +68,10 @@ public class ActivityProfile {
         return isEmpty() ? null : regionStartLoc.spanWith(regionStopLoc);
     }
 
-    public String getContig() {
-        return regionStartLoc.getContig();
-    }
-
     public int getEnd() {
         return regionStopLoc.getEnd();
     }
-
-    /**
-     * Get the list of activity profile results in this object
-     * @return a non-null, ordered list of activity profile results
-     */
-    protected List<ActivityProfileState> getStateList() {
-        return stateList;
-    }
-
-    /**
-     * Get the probabilities of the states as a single linear array of doubles
-     * @return a non-null array
-     */
-    protected double[] getProbabilitiesAsArray() {
-        return getStateList().stream().mapToDouble(ActivityProfileState::isActiveProb).toArray();
-    }
-
-    /**
-     * Helper function that gets the interval for a site offset from relativeLoc, protecting ourselves from
-     * falling off the edge of the contig.
-     *
-     * @param relativeLoc the location offset is relative to
-     * @param offset the offset from relativeLoc where we'd like to create a GenomeLoc
-     * @return a SimpleInterval with relativeLoc.start + offset, if this is on the contig, null otherwise
-     */
-    protected SimpleInterval getLocForOffset(final SimpleInterval relativeLoc, final int offset) {
-        Utils.nonNull(relativeLoc);
-
-        final int start = relativeLoc.getStart() + offset;
-        if ( start < 1 || start > getCurrentContigLength() ) {
-            return null;
-        } else {
-            return new SimpleInterval(regionStartLoc.getContig(), start, start);
-        }
-    }
-
-    /**
-     * Get the length of the current contig
-     * @return the length in bp
-     */
-    private int getCurrentContigLength() {
-        return contigLength;
-    }
-
-    // --------------------------------------------------------------------------------
-    //
-    // routines to add states to a profile
-    //
-    // --------------------------------------------------------------------------------
-
+    
     /**
      * Add the next ActivityProfileState to this profile.
      *
@@ -156,43 +85,15 @@ public class ActivityProfile {
 
         if ( regionStartLoc == null ) {
             regionStartLoc = loc;
-            regionStopLoc = loc;
             contigLength = samHeader.getSequence(regionStartLoc.getContig()).getSequenceLength();
         } else {
             Utils.validateArg( regionStopLoc.getStart() == loc.getStart() - 1, () ->
                     "Bad add call to ActivityProfile: loc " + loc + " not immediately after last loc " + regionStopLoc);
-            regionStopLoc = loc;
         }
-
-        incorporateSingleState(state);
+        regionStopLoc = loc;
+        stateList.add(state);
     }
 
-    /**
-     * Incorporate a single activity profile state into the current list of states
-     *
-     * If state's position occurs immediately after the last position in this profile, then
-     * the state is appended to the state list.  If it's within the existing states list,
-     * the prob of stateToAdd is added to its corresponding state in the list.  If the
-     * position would be before the start of this profile, stateToAdd is simply ignored.
-     *
-     * @param stateToAdd the state we want to add to the states list
-     */
-    private void incorporateSingleState(final ActivityProfileState stateToAdd) {
-        Utils.nonNull(stateToAdd);
-        final int position = stateToAdd.getOffset(regionStartLoc);
-        // should we allow this?  probably not
-        Utils.validateArg(position <= size(), () -> "Must add state contiguous to existing states: adding " + stateToAdd);
-
-        if ( position >= 0 ) {
-            // ignore states starting before this region's start
-            if ( position < size() ) {
-                stateList.get(position).setIsActiveProb(stateList.get(position).isActiveProb() + stateToAdd.isActiveProb());
-            } else {
-                Utils.validateArg(position == size(), "position == size but it wasn't");
-                stateList.add(stateToAdd);
-            }
-        }
-    }
 
     // --------------------------------------------------------------------------------
     //
@@ -309,7 +210,8 @@ public class ActivityProfile {
      * @return the index into stateList of the last element of this region, or -1 if it cannot be found
      */
     private int findEndOfRegion(final boolean isActiveRegion, final int minRegionSize, final int maxRegionSize, final boolean forceConversion) {
-        if ( ! forceConversion && stateList.size() < maxRegionSize + getMaxProbPropagationDistance() ) {
+        // TODO: this used to account for propagation distance
+        if ( ! forceConversion && stateList.size() < maxRegionSize) {
             // we really haven't finalized at the probability mass that might affect our decision, so keep
             // waiting until we do before we try to make any decisions
             return -1;

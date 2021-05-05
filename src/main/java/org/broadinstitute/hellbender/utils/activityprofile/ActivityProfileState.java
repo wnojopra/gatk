@@ -20,14 +20,6 @@ public final class ActivityProfileState {
     }
 
     /**
-     * Set the probability that this site is active.
-     * @param activeProb probability (should be between 0.0 and 1.0) that the site is active
-     */
-    public void setIsActiveProb( final double activeProb ) {
-        this.activeProb = activeProb;
-    }
-
-    /**
      * @return The type of the value returned by {@link #getSize}
      */
     public Type getResultState() {
@@ -70,7 +62,7 @@ public final class ActivityProfileState {
         Utils.validateArg(loc.size() == 1, "Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
         this.size = ParamUtils.isPositiveOrZero(size, "Size may not be negative");
         this.loc = loc;
-        setIsActiveProb(activeProb);
+        this.activeProb = activeProb;
         this.resultState = resultState;
     }
 

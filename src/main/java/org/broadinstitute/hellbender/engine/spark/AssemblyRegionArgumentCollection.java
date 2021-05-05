@@ -17,7 +17,6 @@ public class AssemblyRegionArgumentCollection implements Serializable {
     public static final String ASSEMBLY_PADDING_LONG_NAME = "assembly-region-padding";
     public static final String MAX_STARTS_LONG_NAME = "max-reads-per-alignment-start";
     public static final String THRESHOLD_LONG_NAME = "active-probability-threshold";
-    public static final String PROPAGATION_LONG_NAME = "max-prob-propagation-distance";
 
     public static final int DEFAULT_MIN_ASSEMBLY_REGION_SIZE = 50;
     public static final int DEFAULT_MAX_ASSEMBLY_REGION_SIZE = 300;
@@ -76,10 +75,6 @@ public class AssemblyRegionArgumentCollection implements Serializable {
     @Advanced
     @Argument(fullName = THRESHOLD_LONG_NAME, doc="Minimum probability for a locus to be considered active.", optional = true)
     public double activeProbThreshold = defaultActiveProbThreshold();
-
-    @Advanced
-    @Argument(fullName = PROPAGATION_LONG_NAME, doc="Upper limit on how many bases away probability mass can be moved around when calculating the boundaries between active and inactive assembly regions", optional = true)
-    public int maxProbPropagationDistance = defaultMaxProbPropagationDistance();
 
     @Advanced
     @Argument(fullName = FORCE_ACTIVE_REGIONS_LONG_NAME, doc = "If provided, all regions will be marked as active", optional = true)
@@ -151,11 +146,6 @@ public class AssemblyRegionArgumentCollection implements Serializable {
      * @return Default value for the {@link #activeProbThreshold} parameter, if none is provided on the command line
      */
     protected double defaultActiveProbThreshold() { return DEFAULT_ACTIVE_PROB_THRESHOLD; }
-
-    /**
-     * @return Default value for the {@link #maxProbPropagationDistance} parameter, if none is provided on the command line
-     */
-    protected int defaultMaxProbPropagationDistance() { return DEFAULT_MAX_PROB_PROPAGATION_DISTANCE; }
 
     public void validate() {
         if ( minAssemblyRegionSize <= 0 || maxAssemblyRegionSize <= 0 ) {
