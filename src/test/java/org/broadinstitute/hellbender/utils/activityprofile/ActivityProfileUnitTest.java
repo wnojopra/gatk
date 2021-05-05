@@ -97,7 +97,6 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
             profile.add(new ActivityProfileState(new SimpleInterval(loc), p));
             Assert.assertFalse(profile.isEmpty(), "Profile shouldn't be empty after adding a state");
         }
-        Assert.assertEquals(genomeLocParser.createGenomeLoc(profile.regionStartLoc), genomeLocParser.createGenomeLoc(cfg.regionStart.getContig(), cfg.regionStart.getStart(), cfg.regionStart.getStart() ), "Start loc should be the start of the region");
 
         Assert.assertEquals(profile.size(), cfg.probs.size(), "Should have exactly the number of states we expected to add");
         assertProbsAreEqual(profile.stateList, cfg.probs);

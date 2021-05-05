@@ -14,17 +14,7 @@ import java.util.*;
 public class ActivityProfile {
     protected final List<ActivityProfileState> stateList;
     protected final double activeProbThreshold;
-
-    protected SimpleInterval regionStartLoc = null;
-    protected SimpleInterval regionStopLoc = null;
-
     protected SAMFileHeader samHeader;
-
-    /**
-     * A cached value of the regionStartLoc contig length, to make calls to
-     * getCurrentContigLength efficient
-     */
-    protected int contigLength = -1;
 
     /**
      * Create a empty ActivityProfile, restricting output to profiles overlapping intervals, if not null
@@ -38,10 +28,7 @@ public class ActivityProfile {
 
     @Override
     public String toString() {
-        return "ActivityProfile{" +
-                "start=" + regionStartLoc +
-                ", stop=" + regionStopLoc +
-                '}';
+        return "ActivityProfile{start=" + startLoc() + ", stop=" + stopLoc() + '}';
     }
 
     /**
@@ -65,11 +52,21 @@ public class ActivityProfile {
      * @return a potentially null SimpleInterval.  Will be null if this profile is empty
      */
     public SimpleInterval getSpan() {
-        return isEmpty() ? null : regionStartLoc.spanWith(regionStopLoc);
+        return isEmpty() ? null : startLoc().spanWith(stopLoc());
+    }
+
+    // the start is just the location of the first state in stateList
+    private SimpleInterval startLoc() {
+        return stateList.isEmpty() ? null : stateList.get(0).getLoc();
+    }
+
+    // the stop (inclusive) is just the location of the last state in stateList
+    private SimpleInterval stopLoc() {
+        return stateList.isEmpty() ? null : stateList.get(stateList.size() - 1).getLoc();
     }
 
     public int getEnd() {
-        return regionStopLoc.getEnd();
+        return stopLoc().getEnd();
     }
 
     /**
@@ -82,18 +79,10 @@ public class ActivityProfile {
     public void add(final ActivityProfileState state) {
         Utils.nonNull(state);
         final SimpleInterval loc = state.getLoc();
-
-        if ( regionStartLoc == null ) {
-            regionStartLoc = loc;
-            contigLength = samHeader.getSequence(regionStartLoc.getContig()).getSequenceLength();
-        } else {
-            Utils.validateArg( regionStopLoc.getStart() == loc.getStart() - 1, () ->
-                    "Bad add call to ActivityProfile: loc " + loc + " not immediately after last loc " + regionStopLoc);
-        }
-        regionStopLoc = loc;
+        Utils.validateArg(stateList.isEmpty() || loc.getStart() == stopLoc().getStart() + 1,
+                () -> "Adding non-contiguous state: " + loc + " after " + stopLoc());
         stateList.add(state);
     }
-
 
     // --------------------------------------------------------------------------------
     //
@@ -129,20 +118,14 @@ public class ActivityProfile {
 
         final List<AssemblyRegion> regions = new ArrayList<>();
 
-        // keep popping regions until we don't have enough states left to proceed
+        // keep popping regions until we don't have enough states left to proceed and need to wait for more
         while ( !(stateList.isEmpty() || (atEndOfInterval && stateList.size() < maxRegionSize) )) {
             final ActivityProfileState first = stateList.get(0);
             final boolean isActiveRegion = first.isActiveProb() > activeProbThreshold;
             final int sizeOfNextRegion = findEndOfRegion(isActiveRegion, minRegionSize, maxRegionSize, atEndOfInterval);
             final SimpleInterval nextRegionInterval = new SimpleInterval(first.getLoc().getContig(), first.getLoc().getStart(), first.getLoc().getStart() + sizeOfNextRegion);// we need to create the active region, and clip out the states we're extracting from this profile
 
-            stateList.subList(0, sizeOfNextRegion + 1).clear();// update the start and stop locations as necessary
-            if (stateList.isEmpty()) {
-                regionStartLoc = regionStopLoc = null;
-            } else {
-                regionStartLoc = stateList.get(0).getLoc();
-            }
-
+            stateList.subList(0, sizeOfNextRegion + 1).clear();
             regions.add(new AssemblyRegion(nextRegionInterval, isActiveRegion, assemblyRegionExtension, samHeader));
         }
         return regions;
