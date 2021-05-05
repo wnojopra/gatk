@@ -463,8 +463,7 @@ public final class HaplotypeCallerEngine implements AssemblyRegionEvaluator {
     /**
      * Given a pileup, returns an ActivityProfileState containing the probability (0.0 to 1.0) that it's an "active" site.
      *
-     * Note that the current implementation will always return either 1.0 or 0.0, as it relies on the smoothing in
-     * {@link org.broadinstitute.hellbender.utils.activityprofile.BandPassActivityProfile} to create the full distribution
+     * Note that the current implementation will always return either 1.0 or 0.0
      * of probabilities. This is consistent with GATK 3.
      *
      * @param context reads pileup to examine

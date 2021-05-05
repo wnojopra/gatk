@@ -45,28 +45,20 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
         List<AssemblyRegion> expectedRegions;
         int extension = 0;
         GenomeLoc regionStart = startLoc;
-        final ProfileType type;
 
-        public BasicActivityProfileTestProvider(final ProfileType type, final List<Double> probs, boolean startActive, int ... startsAndStops) {
+        public BasicActivityProfileTestProvider(final List<Double> probs, boolean startActive, int... startsAndStops) {
             super(BasicActivityProfileTestProvider.class);
-            this.type = type;
             this.probs = probs;
             this.expectedRegions = toRegions(startActive, startsAndStops);
             setName(getName());
         }
 
         private String getName() {
-            return String.format("type=%s probs=%s expectedRegions=%s", type, Utils.join(",", probs), Utils.join(",", expectedRegions));
+            return String.format("probs=%s expectedRegions=%s", Utils.join(",", probs), Utils.join(",", expectedRegions));
         }
 
         public ActivityProfile makeProfile() {
-            switch ( type ) {
-                case Base: return new ActivityProfile(MAX_PROB_PROPAGATION_DISTANCE, ACTIVE_PROB_THRESHOLD, header);
-                case BandPass:
-                    // zero size => equivalent to ActivityProfile
-                    return new BandPassActivityProfile(MAX_PROB_PROPAGATION_DISTANCE, ACTIVE_PROB_THRESHOLD, 0, 0.01, false, header);
-                default: throw new IllegalStateException(type.toString());
-            }
+            return new ActivityProfile(MAX_PROB_PROPAGATION_DISTANCE, ACTIVE_PROB_THRESHOLD, header);
         }
 
         private List<AssemblyRegion> toRegions(boolean isActive, int[] startsAndStops) {
@@ -83,19 +75,13 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
         }
     }
 
-    private enum ProfileType {
-        Base, BandPass
-    }
-
     @DataProvider(name = "BasicActivityProfileTestProvider")
     public Object[][] makeQualIntervalTestProvider() {
-        for ( final ProfileType type : ProfileType.values() ) {
-            new BasicActivityProfileTestProvider(type, Arrays.asList(1.0), true, 0, 1);
-            new BasicActivityProfileTestProvider(type, Arrays.asList(1.0, 0.0), true, 0, 1, 2);
-            new BasicActivityProfileTestProvider(type, Arrays.asList(0.0, 1.0), false, 0, 1, 2);
-            new BasicActivityProfileTestProvider(type, Arrays.asList(1.0, 0.0, 1.0), true, 0, 1, 2, 3);
-            new BasicActivityProfileTestProvider(type, Arrays.asList(1.0, 1.0, 1.0), true, 0, 3);
-        }
+        new BasicActivityProfileTestProvider(Arrays.asList(1.0), true, 0, 1);
+        new BasicActivityProfileTestProvider(Arrays.asList(1.0, 0.0), true, 0, 1, 2);
+        new BasicActivityProfileTestProvider(Arrays.asList(0.0, 1.0), false, 0, 1, 2);
+        new BasicActivityProfileTestProvider(Arrays.asList(1.0, 0.0, 1.0), true, 0, 1, 2, 3);
+        new BasicActivityProfileTestProvider(Arrays.asList(1.0, 1.0, 1.0), true, 0, 3);
 
         return BasicActivityProfileTestProvider.getTests(BasicActivityProfileTestProvider.class);
     }

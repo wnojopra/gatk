@@ -8,7 +8,6 @@ import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.activityprofile.ActivityProfile;
 import org.broadinstitute.hellbender.utils.activityprofile.ActivityProfileState;
-import org.broadinstitute.hellbender.utils.activityprofile.BandPassActivityProfile;
 
 import java.util.*;
 
@@ -65,7 +64,7 @@ public class AssemblyRegionFromActivityProfileStateIterator implements Iterator<
 
         this.readyRegion = null;
         this.pendingRegions = new ArrayDeque<>();
-        this.activityProfile = new BandPassActivityProfile(maxProbPropagationDistance, activeProbThreshold, BandPassActivityProfile.MAX_FILTER_SIZE, BandPassActivityProfile.DEFAULT_SIGMA, readHeader);
+        this.activityProfile = new ActivityProfile(maxProbPropagationDistance, activeProbThreshold, readHeader);
 
         readyRegion = loadNextAssemblyRegion();
     }

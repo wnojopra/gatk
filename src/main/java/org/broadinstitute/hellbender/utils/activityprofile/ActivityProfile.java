@@ -107,12 +107,7 @@ public class ActivityProfile {
      * @return a non-null array
      */
     protected double[] getProbabilitiesAsArray() {
-        final double[] probs = new double[getStateList().size()];
-        int i = 0;
-        for ( final ActivityProfileState state : getStateList() ) {
-            probs[i++] = state.isActiveProb();
-        }
-        return probs;
+        return getStateList().stream().mapToDouble(ActivityProfileState::isActiveProb).toArray();
     }
 
     /**
