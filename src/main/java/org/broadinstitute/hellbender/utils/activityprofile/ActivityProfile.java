@@ -159,13 +159,7 @@ public class ActivityProfile {
         if ( stateList.isEmpty() ) {
             return null;
         }
-
-        // If we are flushing the activity profile we need to trim off the excess states so that we don't create regions outside of our current processing interval
-        if( atEndOfInterval ) {
-            final List<ActivityProfileState> statesToTrimAway = new ArrayList<>(stateList.subList(getSpan().size(), stateList.size()));
-            stateList.removeAll(statesToTrimAway);
-        }
-
+        
         final ActivityProfileState first = stateList.get(0);
         final boolean isActiveRegion = first.isActiveProb() > activeProbThreshold;
         final int offsetOfNextRegionEnd = findEndOfRegion(isActiveRegion, minRegionSize, maxRegionSize, atEndOfInterval);
