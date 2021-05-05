@@ -15,9 +15,6 @@ public final class ActivityProfileState {
     private final Type resultState;
     private final Number resultValue;
 
-    // When range-checking probabilities, we allow this much tolerance.
-    private static final double PROBABILITY_TOLERANCE = 0.01;
-
     public double isActiveProb() {
         return activeProb;
     }
