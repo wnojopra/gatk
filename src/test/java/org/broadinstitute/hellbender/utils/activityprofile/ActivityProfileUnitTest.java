@@ -182,7 +182,7 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
 
 
     @Test(dataProvider = "RegionCreationTests")
-    public void testRegionCreation(final int start, final List<Boolean> probs, int maxRegionSize, final int nParts, final boolean forceConversion, final boolean waitUntilEnd) {
+    public void testRegionCreation(final int start, final List<Boolean> probs, int maxRegionSize, final int nParts, final boolean atEndOfInterval, final boolean waitUntilEnd) {
         final ActivityProfile profile = new ActivityProfile(ACTIVE_PROB_THRESHOLD, header);
         Assert.assertNotNull(profile.toString());
 
@@ -202,13 +202,13 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
             }
         }
 
-        if ( waitUntilEnd || forceConversion ) {
-            final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, 1, maxRegionSize, forceConversion);
+        if ( waitUntilEnd || atEndOfInterval ) {
+            final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, 1, maxRegionSize, atEndOfInterval);
             lastRegion = assertGoodRegions(start, regions, maxRegionSize, lastRegion, probs, seenSites);
         }
 
         for ( int i = 0; i < probs.size(); i++ ) {
-            if ( forceConversion || (i + maxRegionSize < probs.size()))
+            if ( atEndOfInterval || (i + maxRegionSize < probs.size()))
                 // only require a site to be seen if we are forcing conversion or the site is more than maxRegionSize from the end
                 Assert.assertTrue(seenSites.get(i), "Missed site " + i);
         }
