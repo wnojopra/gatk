@@ -169,10 +169,7 @@ public class ActivityProfile {
             regionStopLoc = loc;
         }
 
-        final Collection<ActivityProfileState> processedStates = processState(state);
-        for ( final ActivityProfileState processedState : processedStates ) {
-            incorporateSingleState(processedState);
-        }
+        incorporateSingleState(state);
     }
 
     /**
@@ -199,42 +196,6 @@ public class ActivityProfile {
                 Utils.validateArg(position == size(), "position == size but it wasn't");
                 stateList.add(stateToAdd);
             }
-        }
-    }
-
-    /**
-     * Process justAddedState, returning a collection of derived states that actually be added to the stateList
-     *
-     * The purpose of this function is to transform justAddedStates, if needed, into a series of atomic states
-     * that we actually want to track.  For example, if state is for soft clips, we transform that single
-     * state into a list of states that surround the state up to the distance of the soft clip.
-     *
-     * Can be overridden by subclasses to transform states in any way
-     *
-     * There's no particular contract for the output states, except that they can never refer to states
-     * beyond the current end of the stateList unless the explicitly include preceding states before
-     * the reference.  So for example if the current state list is [1, 2, 3] this function could return
-     * [1,2,3,4,5] but not [1,2,3,5].
-     *
-     * @param justAddedState the state our client provided to use to add to the list
-     * @return a list of derived states that should actually be added to this profile's state list
-     */
-    protected Collection<ActivityProfileState> processState(final ActivityProfileState justAddedState) {
-        if ( justAddedState.getResultState().equals(ActivityProfileState.Type.HIGH_QUALITY_SOFT_CLIPS) ) {
-            // special code to deal with the problem that high quality soft clipped bases aren't added to pileups
-            final List<ActivityProfileState> states = new ArrayList<>();
-            // add no more than the max prob propagation distance num HQ clips
-            final int numHQClips = Math.min(justAddedState.getSize(), getMaxProbPropagationDistance());
-            for( int i = - numHQClips; i <= numHQClips; i++ ) {
-                final SimpleInterval loc = getLocForOffset(justAddedState.getLoc(), i);
-                if ( loc != null ) {
-                    states.add(new ActivityProfileState(loc, justAddedState.isActiveProb()));
-                }
-            }
-
-            return states;
-        } else {
-            return Collections.singletonList(justAddedState);
         }
     }
 

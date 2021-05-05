@@ -52,8 +52,7 @@ public final class ActivityProfileState {
      * The type of the value returned by {@link #getSize}
      */
     public enum Type {
-        NONE,
-        HIGH_QUALITY_SOFT_CLIPS
+        NONE
     }
 
     /**
@@ -68,10 +67,7 @@ public final class ActivityProfileState {
 
     /**
      * Create a new ActivityProfileState at loc with probability of being active of activeProb that maintains some
-     * information about the result state and value
-     *
-     * The only state value in use is HIGH_QUALITY_SOFT_CLIPS, and here the value is interpreted as the number
-     * of bp affected by the soft clips.
+     * information about the result state
      *
      * @param loc the position of the result profile (for debugging purposes)
      * @param activeProb the probability of being active (between 0 and 1)

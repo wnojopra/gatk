@@ -295,7 +295,7 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
         }
 
         final GenomeLoc softClipLoc = genomeLocParser.createGenomeLoc(contig, nPrecedingSites + start);
-        profile.add(new ActivityProfileState(new SimpleInterval(softClipLoc), 1.0, ActivityProfileState.Type.HIGH_QUALITY_SOFT_CLIPS, softClipSize));
+        profile.add(new ActivityProfileState(new SimpleInterval(softClipLoc), 1.0, ActivityProfileState.Type.NONE, softClipSize));
 
         final int actualNumOfSoftClips = Math.min(softClipSize, profile.getMaxProbPropagationDistance());
         if ( nPrecedingSites == 0 ) {

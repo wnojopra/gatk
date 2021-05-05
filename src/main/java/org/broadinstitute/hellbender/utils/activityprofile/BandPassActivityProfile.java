@@ -3,11 +3,7 @@ package org.broadinstitute.hellbender.utils.activityprofile;
 
 import htsjdk.samtools.SAMFileHeader;
 import org.broadinstitute.hellbender.utils.MathUtils;
-import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * A band pass filtering version of the activity profile
@@ -120,28 +116,4 @@ public class BandPassActivityProfile extends ActivityProfile {
         return gaussianKernel;
     }
 
-    /**
-     * Band pass the probabilities in the ActivityProfile, producing a new profile that's band pass filtered
-     * @return a new double[] that's the band-pass filtered version of this profile
-     */
-    @Override
-    protected Collection<ActivityProfileState> processState(final ActivityProfileState justAddedState) {
-        final Collection<ActivityProfileState> states = new ArrayList<>();
-
-        for ( final ActivityProfileState superState : super.processState(justAddedState) ) {
-            if ( superState.isActiveProb() > 0.0 ) {
-                for( int i = -filterSize; i <= filterSize; i++ ) {
-                    final SimpleInterval loc = getLocForOffset(justAddedState.getLoc(), i);
-                    if ( loc != null ) {
-                        final double newProb = superState.isActiveProb() * gaussianKernel[i + filterSize];
-                        states.add(new ActivityProfileState(loc, newProb));
-                    }
-                }
-            } else {
-                states.add(justAddedState);
-            }
-        }
-
-        return states;
-    }
 }
