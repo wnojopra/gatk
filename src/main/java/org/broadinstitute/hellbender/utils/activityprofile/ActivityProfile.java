@@ -150,16 +150,15 @@ public class ActivityProfile {
      * @param assemblyRegionExtension the extension value to provide to the constructed regions
      * @param minRegionSize the minimum region size, in the case where we have to cut up regions that are too large
      * @param maxRegionSize the maximize size of the returned region
-     * @param atEndOfInterval if true, we'll return a region whose end isn't sufficiently far from the end of the
-     *                        stateList.  Used to close out the active region when we've hit some kind of end (such
-     *                        as the end of the contig)
+     * @param atEndOfInterval if true, we are at the end of a contig or called interval and may return a region whose end isn't
+     *                        sufficiently far from the end of the stateList.
      * @return a fully formed assembly region, or null if none can be made
      */
     private AssemblyRegion popNextReadyAssemblyRegion( final int assemblyRegionExtension, final int minRegionSize, final int maxRegionSize, final boolean atEndOfInterval ) {
         if ( stateList.isEmpty() ) {
             return null;
         }
-        
+
         final ActivityProfileState first = stateList.get(0);
         final boolean isActiveRegion = first.isActiveProb() > activeProbThreshold;
         final int offsetOfNextRegionEnd = findEndOfRegion(isActiveRegion, minRegionSize, maxRegionSize, atEndOfInterval);
