@@ -1,9 +1,9 @@
 package org.broadinstitute.hellbender.utils.activityprofile;
 
 import htsjdk.samtools.util.Locatable;
-import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.param.ParamUtils;
 
 /**
  * Captures the probability that a specific locus in the genome represents an "active" site containing
@@ -13,7 +13,7 @@ public final class ActivityProfileState {
     private final SimpleInterval loc;
     private double activeProb;
     private final Type resultState;
-    private final Number resultValue;
+    private final int size;
 
     public double isActiveProb() {
         return activeProb;
@@ -34,7 +34,7 @@ public final class ActivityProfileState {
     }
 
     /**
-     * @return The type of the value returned by {@link #getResultValue}
+     * @return The type of the value returned by {@link #getSize}
      */
     public Type getResultState() {
         return resultState;
@@ -44,12 +44,12 @@ public final class ActivityProfileState {
      * @return Numeric value associated with {@link #getResultState}. If {@link #getResultState} is HIGH_QUALITY_SOFT_CLIPS,
      *         this is the number of bp affected by the soft clips
      */
-    public Number getResultValue() {
-        return resultValue;
+    public int getSize() {
+        return size;
     }
 
     /**
-     * The type of the value returned by {@link #getResultValue}
+     * The type of the value returned by {@link #getSize}
      */
     public enum Type {
         NONE,
@@ -63,7 +63,7 @@ public final class ActivityProfileState {
      * @param activeProb the probability of being active (between 0 and 1)
      */
     public ActivityProfileState(final SimpleInterval loc, final double activeProb) {
-        this(loc, activeProb, Type.NONE, null);
+        this(loc, activeProb, Type.NONE, 0);
     }
 
     /**
@@ -76,18 +76,12 @@ public final class ActivityProfileState {
      * @param loc the position of the result profile (for debugging purposes)
      * @param activeProb the probability of being active (between 0 and 1)
      */
-    public ActivityProfileState(final SimpleInterval loc, final double activeProb, final Type resultState, final Number resultValue) {
-        if ( loc.size() != 1 ) {
-            throw new IllegalArgumentException("Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
-        }
-        if ( resultValue != null && resultValue.doubleValue() < 0 ) {
-            throw new IllegalArgumentException("Result value isn't null and its < 0, which is illegal: " + resultValue);
-        }
-
+    public ActivityProfileState(final SimpleInterval loc, final double activeProb, final Type resultState, final int size) {
+        Utils.validateArg(loc.size() == 1, "Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
+        this.size = ParamUtils.isPositiveOrZero(size, "Size may not be negative");
         this.loc = loc;
         setIsActiveProb(activeProb);
         this.resultState = resultState;
-        this.resultValue = resultValue;
     }
 
     /**
@@ -114,7 +108,7 @@ public final class ActivityProfileState {
                 "loc=" + loc +
                 ", activeProb=" + activeProb +
                 ", resultState=" + resultState +
-                ", resultValue=" + resultValue +
+                ", size=" + size +
                 '}';
     }
 }

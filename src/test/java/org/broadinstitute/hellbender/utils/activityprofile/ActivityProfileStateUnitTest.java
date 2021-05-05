@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.utils.activityprofile;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.activityprofile.ActivityProfileState;
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -34,11 +33,11 @@ public final class ActivityProfileStateUnitTest {
                 new SimpleInterval(chr, 100, 100))) {
             for ( final double prob : Arrays.asList(0.0, 0.5, 1.0) ) {
                 for ( final ActivityProfileState.Type state : ActivityProfileState.Type.values() ) {
-                    for ( final Number value : Arrays.asList(1, 2, 4) ) {
-                        tests.add(new Object[]{ loc, prob, state, value});
+                    for ( final int size : Arrays.asList(1, 2, 4) ) {
+                        tests.add(new Object[]{ loc, prob, state, size});
                     }
                 }
-                tests.add(new Object[]{ loc, prob, null, null});
+                tests.add(new Object[]{ loc, prob, null, 0});
             }
         }
 
@@ -46,23 +45,23 @@ public final class ActivityProfileStateUnitTest {
     }
 
     @Test(dataProvider = "ActiveProfileResultProvider")
-    public void testActiveProfileResultProvider(SimpleInterval loc, final double prob, ActivityProfileState.Type maybeState, final Number maybeNumber) {
+    public void testActiveProfileResultProvider(SimpleInterval loc, final double prob, ActivityProfileState.Type maybeState, final int size) {
         final ActivityProfileState apr = maybeState == null
                 ? new ActivityProfileState(loc, prob)
-                : new ActivityProfileState(loc, prob, maybeState, maybeNumber);
+                : new ActivityProfileState(loc, prob, maybeState, size);
 
         Assert.assertEquals(apr.getLoc(), loc);
         Assert.assertEquals(apr.getOffset(loc), 0);
         Assert.assertNotNull(apr.toString());
         Assert.assertEquals(apr.isActiveProb(), prob);
         Assert.assertEquals(apr.getResultState(), maybeState == null ? ActivityProfileState.Type.NONE : maybeState);
-        Assert.assertEquals(apr.getResultValue(), maybeState == null ? null : maybeNumber);
+        Assert.assertEquals(apr.getSize(), size);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testError1(){
         final String chr = sequenceDictionary.getSequence(0).getSequenceName();
-        new ActivityProfileState(new SimpleInterval(chr, 10, 10), 0.1, null, -1.0);
+        new ActivityProfileState(new SimpleInterval(chr, 10, 10), 0.1, null, 0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

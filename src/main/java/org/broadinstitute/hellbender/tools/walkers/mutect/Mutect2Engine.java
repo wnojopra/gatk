@@ -415,7 +415,7 @@ public final class Mutect2Engine implements AssemblyRegionEvaluator {
         if (pileup.size() < minCallableDepth) {
             callableSites.increment();
         }
-        return new ActivityProfileState( refInterval, 1.0, ActivityProfileState.Type.NONE, null);
+        return new ActivityProfileState( refInterval, 1.0, ActivityProfileState.Type.NONE, 0);
     }
 
     // NOTE: this is a hack to get around an htsjdk bug: https://github.com/samtools/htsjdk/issues/1228
