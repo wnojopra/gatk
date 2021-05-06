@@ -139,10 +139,31 @@ public class ActivityProfile {
         if (variants.isEmpty()) {
             return ImmutablePair.of(Math.min(size(), maxRegionSize), false);
         } else if (variants.get(0) > phasingBuffer) {
-            return ImmutablePair.of(variants.get(0) - phasingBuffer, false);
+            return ImmutablePair.of(Math.min(variants.get(0) - phasingBuffer, maxRegionSize), false);
         } else {
-            final OptionalInt firstLargeGap = IntStream.range(0, variants.size()
+            int maxGapIndex = 0;
+            int maxGap = 0;
+            for (int n = 0; n < variants.size(); n++) {
+                final int variant = variants.get(n);
 
+                if (variant > maxRegionSize) {  // ignore variants in the phasingBuffer padding region
+                    break;
+                }
+                final int nextVariant = (n < variants.size() - 1) ? variants.get(n+1) : size();
+                final int gap = nextVariant - variant;
+
+                if (gap > maxGap) {
+                    maxGap = gap;
+                    maxGapIndex = n;
+                }
+
+                if (gap < 2 * phasingBuffer) {
+                    return ImmutablePair.of(variant + phasingBuffer, true);
+                }
+            }
+
+            // if we haven't found anything with a large enough gap, we use the biggest gap
+            return ImmutablePair.of(variants.get(maxGapIndex) + maxGap/2, true);
         }
     }
 
