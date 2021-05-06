@@ -196,13 +196,13 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
             Assert.assertNotNull(profile.toString());
 
             if ( ! waitUntilEnd ) {
-                final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, 1, maxRegionSize, false);
+                final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, maxRegionSize, false, 25);
                 lastRegion = assertGoodRegions(start, regions, maxRegionSize, lastRegion, probs, seenSites);
             }
         }
 
         if ( waitUntilEnd || atEndOfInterval ) {
-            final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, 1, maxRegionSize, atEndOfInterval);
+            final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, maxRegionSize, atEndOfInterval, 25);
             lastRegion = assertGoodRegions(start, regions, maxRegionSize, lastRegion, probs, seenSites);
         }
 
@@ -420,7 +420,7 @@ public class ActivityProfileUnitTest extends GATKBaseTest {
             profile.add(state);
         }
 
-        final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, minRegionSize, maxRegionSize, false);
+        final List<AssemblyRegion> regions = profile.popReadyAssemblyRegions(0, maxRegionSize, false, 25);
         Assert.assertTrue(regions.size() >= 1, "Should only be one regions for this test");
         final AssemblyRegion region = regions.get(0);
         Assert.assertEquals(region.getSpan().getStart(), 1, "Region should start at 1");

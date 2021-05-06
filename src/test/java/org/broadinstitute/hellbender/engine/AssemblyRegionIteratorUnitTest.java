@@ -62,7 +62,6 @@ public class AssemblyRegionIteratorUnitTest extends GATKBaseTest {
             final MultiIntervalLocalReadShard readShard = new MultiIntervalLocalReadShard(shardIntervals, assemblyRegionPadding, readsSource);
             final HaplotypeCallerArgumentCollection hcArgs = new HaplotypeCallerArgumentCollection();
             final AssemblyRegionArgumentCollection assemblyRegionArgs = new AssemblyRegionArgumentCollection();
-            assemblyRegionArgs.minAssemblyRegionSize = minRegionSize;
             assemblyRegionArgs.maxAssemblyRegionSize = maxRegionSize;
             assemblyRegionArgs.assemblyRegionPadding = assemblyRegionPadding;
             final AssemblyRegionEvaluator evaluator = new HaplotypeCallerEngine(hcArgs, assemblyRegionArgs, false, false,

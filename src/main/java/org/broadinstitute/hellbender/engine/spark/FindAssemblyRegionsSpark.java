@@ -206,10 +206,9 @@ public class FindAssemblyRegionsSpark {
                         new AssemblyRegionFromActivityProfileStateIterator(
                                 ActivityProfileStateRange.toIteratorActivityProfileState(iter._2.iterator()),
                                 header,
-                                assemblyRegionArgs.minAssemblyRegionSize,
                                 assemblyRegionArgs.maxAssemblyRegionSize,
                                 assemblyRegionArgs.assemblyRegionPadding,
-                                assemblyRegionArgs.activeProbThreshold), new com.google.common.base.Function<AssemblyRegion, ReadlessAssemblyRegion>() {
+                                assemblyRegionArgs.activeProbThreshold, assemblyRegionArgs.phasingBuffer), new com.google.common.base.Function<AssemblyRegion, ReadlessAssemblyRegion>() {
                             @Nullable
                             @Override
                             public ReadlessAssemblyRegion apply(@Nullable AssemblyRegion input) {

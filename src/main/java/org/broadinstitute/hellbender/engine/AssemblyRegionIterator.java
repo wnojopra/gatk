@@ -124,7 +124,8 @@ public class AssemblyRegionIterator implements Iterator<AssemblyRegion> {
             // Ordering matters here: need to check for forceConversion before adding current pileup to the activity profile
             if ( ! activityProfile.isEmpty() ) {
                 final boolean atEndOfInterval = pileup.getLocation().getStart() != activityProfile.getEnd() + 1;
-                pendingRegions.addAll(activityProfile.popReadyAssemblyRegions(assemblyRegionArgs.assemblyRegionPadding, assemblyRegionArgs.minAssemblyRegionSize, assemblyRegionArgs.maxAssemblyRegionSize, atEndOfInterval));
+                pendingRegions.addAll(activityProfile.popReadyAssemblyRegions(assemblyRegionArgs.assemblyRegionPadding,
+                        assemblyRegionArgs.maxAssemblyRegionSize, atEndOfInterval, assemblyRegionArgs.phasingBuffer));
             }
 
             // Add the current pileup to the activity profile
@@ -155,7 +156,8 @@ public class AssemblyRegionIterator implements Iterator<AssemblyRegion> {
 
             if ( ! activityProfile.isEmpty() ) {
                 // Pop the activity profile a final time with atEndOfInterval == true
-                pendingRegions.addAll(activityProfile.popReadyAssemblyRegions(assemblyRegionArgs.assemblyRegionPadding, assemblyRegionArgs.minAssemblyRegionSize, assemblyRegionArgs.maxAssemblyRegionSize, true));
+                pendingRegions.addAll(activityProfile.popReadyAssemblyRegions(assemblyRegionArgs.assemblyRegionPadding,
+                        assemblyRegionArgs.maxAssemblyRegionSize, true, assemblyRegionArgs.phasingBuffer));
             }
 
             // Grab the next pending region if there is one, unless we already have a region ready to go

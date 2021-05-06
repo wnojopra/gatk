@@ -1,11 +1,15 @@
 package org.broadinstitute.hellbender.utils.activityprofile;
 
 import htsjdk.samtools.SAMFileHeader;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.hellbender.engine.AssemblyRegion;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Class holding information about per-base activity scores for
@@ -56,6 +60,11 @@ public class ActivityProfile {
     }
 
     // the start is just the location of the first state in stateList
+    private String contig() {
+        return stateList.isEmpty() ? null : stateList.get(0).getLoc().getContig();
+    }
+
+    // the start is just the location of the first state in stateList
     private SimpleInterval startLoc() {
         return stateList.isEmpty() ? null : stateList.get(0).getLoc();
     }
@@ -83,7 +92,7 @@ public class ActivityProfile {
                 () -> "Adding non-contiguous state: " + loc + " after " + stopLoc());
         stateList.add(state);
     }
-    
+
     /**
      * Get the next completed assembly regions from this profile, and remove all states supporting them from this profile
      *
@@ -99,62 +108,43 @@ public class ActivityProfile {
      * No returned region will be larger than maxRegionSize.
      *
      * @param assemblyRegionExtension the extension value to provide to the constructed regions
-     * @param minRegionSize the minimum region size, in the case where we have to cut up regions that are too large
      * @param maxRegionSize the maximize size of the returned region
      * @param atEndOfInterval if true, we are at the end of a contig or called interval and may return a region whose end isn't
      *                        sufficiently far from the end of the stateList.
+     * @param phasingBuffer
      * @return a non-null list of active regions
      */
-    public List<AssemblyRegion> popReadyAssemblyRegions( final int assemblyRegionExtension, final int minRegionSize, final int maxRegionSize, final boolean atEndOfInterval ) {
+    public List<AssemblyRegion> popReadyAssemblyRegions(final int assemblyRegionExtension, final int maxRegionSize, final boolean atEndOfInterval, int phasingBuffer) {
         Utils.validateArg(assemblyRegionExtension >= 0, () -> "assemblyRegionExtension must be >= 0 but got " + assemblyRegionExtension);
-        Utils.validateArg( minRegionSize > 0, () -> "minRegionSize must be >= 1 but got " + minRegionSize);
         Utils.validateArg( maxRegionSize > 0, () -> "maxRegionSize must be >= 1 but got " + maxRegionSize);
 
         final List<AssemblyRegion> regions = new ArrayList<>();
 
-        // keep popping regions until we don't have enough states left to proceed and need to wait for more
-        // TODO: double-check the logic when atEndOfInterval
-        while ( !(stateList.isEmpty() || (atEndOfInterval && stateList.size() < maxRegionSize) )) {
-            final ActivityProfileState first = stateList.get(0);
-            final boolean isActiveRegion = first.isActiveProb() > activeProbThreshold;
-            final int sizeOfNextRegion = findEndOfRegion(isActiveRegion, minRegionSize, maxRegionSize);
-            final SimpleInterval nextRegionInterval = new SimpleInterval(first.getLoc().getContig(), first.getLoc().getStart(), first.getLoc().getStart() + sizeOfNextRegion);// we need to create the active region, and clip out the states we're extracting from this profile
 
-            stateList.subList(0, sizeOfNextRegion + 1).clear();
-            regions.add(new AssemblyRegion(nextRegionInterval, isActiveRegion, assemblyRegionExtension, samHeader));
+        // keep popping regions until we don't have enough states left to proceed and need to wait for more
+        while ( !stateList.isEmpty()  && (atEndOfInterval || stateList.size() >= maxRegionSize + 2 * phasingBuffer)) {
+            final Pair<Integer, Boolean> endAndActivity = getEndAndActivityOfNextRegion(maxRegionSize, phasingBuffer);
+            final int endInclusive = endAndActivity.getLeft();
+            final SimpleInterval nextRegionInterval = new SimpleInterval(contig(), startLoc().getStart(), startLoc().getStart() + endInclusive);// we need to create the active region, and clip out the states we're extracting from this profile
+            stateList.subList(0, endInclusive + 1).clear();
+            regions.add(new AssemblyRegion(nextRegionInterval, endAndActivity.getRight(), assemblyRegionExtension, samHeader));
         }
         return regions;
     }
 
-    /**
-     * Find the end of the current region, returning the index into the element isActive element, or -1 if the region isn't done
-     *
-     * The current region is defined from the start of the stateList, looking for elements that have the same isActiveRegion
-     * flag (i.e., if isActiveRegion is true we are looking for states with isActiveProb > threshold, or alternatively
-     * for states < threshold).  The maximize size of the returned region is maxRegionSize.  If forceConversion is
-     * true, then we'll return the region end even if this isn't safely beyond the max prob propagation distance.
-     *
-     * Note that if isActiveRegion is true, and we can construct an assembly region > maxRegionSize in bp, we
-     * find the further local minimum within that max region, and cut the region there, under the constraint
-     * that the resulting region must be at least minRegionSize in bp.
-     *
-     * @param isActiveRegion is the region we're looking for an active region or inactive region?
-     * @param minRegionSize the minimum region size, in the case where we have to cut up regions that are too large
-     * @param maxRegionSize the maximize size of the returned region
-     * @return the index into stateList of the last element of this region, or -1 if it cannot be found
-     */
-    private int findEndOfRegion(final boolean isActiveRegion, final int minRegionSize, final int maxRegionSize) {
-        // TODO: original code was endOfActiveRegion = first index of stateList where we cross probability threshold
+    // at what index (inclusive) does the next region to pop end and is it active
+    private Pair<Integer, Boolean> getEndAndActivityOfNextRegion(final int maxRegionSize, final int phasingBuffer) {
+        final int maxLookAhead = maxRegionSize + 2 * phasingBuffer;
+        final List<Integer> variants = IntStream.range(0, size()).limit(maxLookAhead).filter(n -> getProb(n) > activeProbThreshold).boxed().collect(Collectors.toList());
+        if (variants.isEmpty()) {
+            return ImmutablePair.of(Math.min(size(), maxRegionSize), false);
+        } else if (variants.get(0) > phasingBuffer) {
+            return ImmutablePair.of(variants.get(0) - phasingBuffer, false);
+        } else {
+            final OptionalInt firstLargeGap = IntStream.range(0, variants.size()
 
-        if ( isActiveRegion && endOfActiveRegion == maxRegionSize ) {
-            // we've run to the end of the region, let's find a good place to cut
-            // TODO: original code was endOfActiveRegion = location of smoothed probability minimum
         }
-
-        // we're one past the end, so i must be decremented
-        return endOfActiveRegion - 1;
     }
-
 
     /**
      * Helper function to get the probability of the state at offset index
