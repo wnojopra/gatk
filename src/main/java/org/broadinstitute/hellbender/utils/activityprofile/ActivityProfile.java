@@ -137,7 +137,7 @@ public class ActivityProfile {
         final int maxLookAhead = maxRegionSize + 2 * phasingBuffer;
         final List<Integer> variants = IntStream.range(0, size()).limit(maxLookAhead).filter(n -> getProb(n) > activeProbThreshold).boxed().collect(Collectors.toList());
         if (variants.isEmpty()) {
-            return ImmutablePair.of(Math.min(size(), maxRegionSize), false);
+            return ImmutablePair.of(Math.min(size() - 1, maxRegionSize), false);
         } else if (variants.get(0) > phasingBuffer) {
             return ImmutablePair.of(Math.min(variants.get(0) - phasingBuffer, maxRegionSize), false);
         } else {

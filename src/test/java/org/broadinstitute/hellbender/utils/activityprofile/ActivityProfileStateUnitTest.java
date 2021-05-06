@@ -67,6 +67,6 @@ public final class ActivityProfileStateUnitTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testError2(){
         final String chr = sequenceDictionary.getSequence(0).getSequenceName();
-        new ActivityProfileState(new SimpleInterval(chr, 10, 11), 0.1, null, 1.0);
+        new ActivityProfileState(new SimpleInterval(chr, 10, 11), 0.1, null, 1);
     }
 }
