@@ -291,7 +291,7 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
                 .filter(vc -> vc.getFilters().isEmpty()).count();
 
         // just a sanity check that this bam has some germline variants on this interval so that our test doesn't pass trivially!
-        Assert.assertTrue(numVariantsBeforeFiltering > 15);
+        Assert.assertTrue(numVariantsBeforeFiltering > 9);
 
         // every variant on this interval in this sample is in gnomAD
         Assert.assertTrue(numVariantsPassingFilters < 2);
@@ -558,7 +558,7 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
                 "chrM:750-750 A*, [G]");
         Assert.assertTrue(variantKeys.containsAll(expectedKeys));
 
-        Assert.assertEquals(variants.get(0).getAttributeAsInt(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY, 0), 1741);
+        Assert.assertEquals(variants.get(0).getAttributeAsInt(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY, 0), 1684);
     }
 
     @DataProvider(name = "vcfsForFiltering")
