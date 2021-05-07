@@ -139,7 +139,7 @@ public class ActivityProfile {
         if (variants.isEmpty()) {
             return ImmutablePair.of(Math.min(size() - 1, maxRegionSize), false);
         } else if (variants.get(0) > phasingBuffer) {
-            return ImmutablePair.of(Math.min(variants.get(0) - phasingBuffer, Math.min(size() - 1, maxRegionSize)), false);
+            return ImmutablePair.of(Math.min(variants.get(0) - 1, Math.min(size() - 1, maxRegionSize)), false);
         } else {
             int maxGapIndex = 0;
             int maxGap = 0;
@@ -157,8 +157,8 @@ public class ActivityProfile {
                     maxGapIndex = n;
                 }
 
-                if (gap < 2 * phasingBuffer) {
-                    return ImmutablePair.of(Math.min(variant + phasingBuffer, size()-1), true);
+                if (gap > 2 * phasingBuffer) {
+                    return ImmutablePair.of(Math.min(variant + 1, size()-1), true);
                 }
             }
 
