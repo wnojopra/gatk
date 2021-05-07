@@ -59,7 +59,7 @@ public final class ActivityProfileState {
      * @param activeProb the probability of being active (between 0 and 1)
      */
     public ActivityProfileState(final SimpleInterval loc, final double activeProb, final Type resultState, final int size) {
-        Utils.validateArg(loc.size() == 1, "Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
+        Utils.validateArg(loc.size() == 1, () -> "Location for an ActivityProfileState must have to size 1 bp but saw " + loc);
         this.size = ParamUtils.isPositiveOrZero(size, "Size may not be negative");
         this.loc = loc;
         this.activeProb = activeProb;
