@@ -512,11 +512,21 @@ public final class ValidateVariants extends VariantWalker {
            }
            if (validationsToPerform[ValidationType.GNARLY_INPUT.ordinal()]) {
                currentType = ValidationType.GNARLY_INPUT;
-               validateGnarlyOutputs(vc);
+               validateGnarlyInputs(vc);
            }
            if (validationsToPerform[ValidationType.VQSR_INPUT.ordinal()]) {
                currentType = ValidationType.VQSR_INPUT;
-               validateVQSRInputs(vc);
+               if (VALIDATE_GVCF) {
+                   validateRequiredRawVQSRAnnotations(vc, vc.getGenotype(0).isHet()  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                   if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+                       validateRequiredRawASVQSRAnnotations(vc, vc.getGenotype(0).isHet() && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                   }
+               } else {
+                   validateVQSRInputs(vc);
+                   if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+                       validateRequiredASVQSRAnnotations(vc, vc.getGenotype(0).isHet()  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                   }
+               }
            }
            if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
                currentType = ValidationType.AS_ANNOTATIONS;
@@ -527,6 +537,20 @@ public final class ValidateVariants extends VariantWalker {
                    e.getMessage() + "Failure at variant context: " + vc.toStringWithoutGenotypes());
            throwOrWarn(withVC);
        }
+    }
+
+    private void validateGnarlyInputs(final VariantContext vc) {
+        if (VALIDATE_GVCF && vc.getGenotype(0).isHomRef()) {
+            return;
+        }
+        for (final String ann : GnarlyGenotyper.GNARLY_REQUIRED_INPUT_ANNOTATIONS) {
+            checkForAnnotation(vc, ann);
+        }
+        if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
+            for (final String ann : GnarlyGenotyper.GNARLY_REQUIRED_AS_INPUT_ANNOTATIONS) {
+                checkForAnnotation(vc, ann);
+            }
+        }
     }
 
     private void validateGnarlyAnnotations(final VariantContext vc) {
@@ -610,6 +634,9 @@ public final class ValidateVariants extends VariantWalker {
     }
 
     private void validateRequiredRawVQSRAnnotations(final VariantContext vc, final boolean hasHetCall) {
+        if (VALIDATE_GVCF && vc.getGenotype(0).isHomRef()) {
+            return;
+        }
         if (!vc.hasGenotypes()) {
             throw new UserException("Strand bias annotations cannot be calculated without FORMAT-level SB field.");
         }
@@ -638,6 +665,9 @@ public final class ValidateVariants extends VariantWalker {
     }
 
     private void validateRequiredRawASVQSRAnnotations(final VariantContext vc, final boolean hasHetCall) {
+        if (VALIDATE_GVCF && vc.getGenotype(0).isHomRef()) {
+            return;
+        }
         for (final String requiredAnnotation : requiredRawASVQSRAnnotationKeys) {
             if (requiredAnnotation.contains("RankSum") && !hasHetCall) {
                 continue;
