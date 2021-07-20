@@ -489,7 +489,7 @@ public final class ValidateVariants extends VariantWalker {
         boolean hasHetCall = false;
         if (vc.hasGenotypes()) {
             for (final Genotype g : vc.getGenotypes()) {
-                if (g.isHet() && !g.isHetNonRef() && g.getAD()[0] > 0) {
+                if (needsRankSum(g)) {
                     hasHetCall = true;
                     break;
                 }
@@ -544,14 +544,14 @@ public final class ValidateVariants extends VariantWalker {
            if (validationsToPerform[ValidationType.VQSR_INPUT.ordinal()]) {
                currentType = ValidationType.VQSR_INPUT;
                if (VALIDATE_GVCF) {
-                   validateRequiredRawVQSRAnnotations(vc, vc.getGenotype(0).isHet()  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                   validateRequiredRawVQSRAnnotations(vc, needsRankSum(vc.getGenotype(0))  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
                    if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-                       validateRequiredRawASVQSRAnnotations(vc, vc.getGenotype(0).isHet() && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                       validateRequiredRawASVQSRAnnotations(vc, needsRankSum(vc.getGenotype(0)) && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
                    }
                } else {
                    validateVQSRInputs(vc);
                    if (validationsToPerform[ValidationType.AS_ANNOTATIONS.ordinal()]) {
-                       validateRequiredASVQSRAnnotations(vc, vc.getGenotype(0).isHet()  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
+                       validateRequiredASVQSRAnnotations(vc, needsRankSum(vc.getGenotype(0))  && vc.getGenotype(0).getAlleles().stream().anyMatch(Allele::isReference));
                    }
                }
            }
@@ -596,6 +596,10 @@ public final class ValidateVariants extends VariantWalker {
             final UserException e = new UserException.BadInput("Variant at " + vc.getContig() + ":" + vc.getStart() + " is missing " + annotationKey);
             throwOrWarn(e);
         }
+    }
+
+    private boolean needsRankSum(final Genotype g) {
+        return g.isHet() && !g.isHetNonRef() && g.getAD()[0] > 0;
     }
 
     private void validateGnarlyOutputs(final VariantContext vc) {
