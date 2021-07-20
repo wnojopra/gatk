@@ -489,7 +489,7 @@ public final class ValidateVariants extends VariantWalker {
         boolean hasHetCall = false;
         if (vc.hasGenotypes()) {
             for (final Genotype g : vc.getGenotypes()) {
-                if (g.isHet() && !g.isHetNonRef()) {
+                if (g.isHet() && !g.isHetNonRef() && g.getAD()[0] > 0) {
                     hasHetCall = true;
                     break;
                 }
