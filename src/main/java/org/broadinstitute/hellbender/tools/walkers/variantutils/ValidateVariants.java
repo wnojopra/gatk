@@ -599,7 +599,16 @@ public final class ValidateVariants extends VariantWalker {
     }
 
     private boolean needsRankSum(final Genotype g) {
-        return g.isHet() && !g.isHetNonRef() && g.getAD()[0] > 0;
+        boolean needsRankSum = g.isHet() && !g.isHetNonRef();
+        final int[] ad = g.getAD();
+        boolean hasEmptyADField = false;
+        for (int i=0; i<ad.length-1; i++) {  //length-1 because non-ref AD *should* be zero
+            if (ad[i] == 0) {
+                hasEmptyADField = true;
+                break;
+            }
+        }
+        return needsRankSum && !hasEmptyADField;
     }
 
     private void validateGnarlyOutputs(final VariantContext vc) {
