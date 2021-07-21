@@ -600,6 +600,9 @@ public final class ValidateVariants extends VariantWalker {
 
     private boolean needsRankSum(final Genotype g) {
         boolean needsRankSum = g.isHet() && !g.isHetNonRef();
+        if (!g.hasAD()) {
+            return false;
+        }
         final int[] ad = g.getAD();
         boolean hasEmptyADField = false;
         for (int i=0; i<ad.length-1; i++) {  //length-1 because non-ref AD *should* be zero
