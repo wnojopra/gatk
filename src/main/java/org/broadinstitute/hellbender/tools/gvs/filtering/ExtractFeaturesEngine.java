@@ -273,7 +273,7 @@ public class ExtractFeaturesEngine {
         double fs = QualityUtils.phredScaleErrorRate(Math.max(FisherStrand.pValueForContingencyTable(refAltTable), AS_StrandBiasTest.MIN_PVALUE));
         double sor = StrandOddsRatio.calculateSOR(refAltTable);
 
-        double mq = Math.sqrt( raw_mq / raw_ad);
+        double mq = Math.min(Math.sqrt( raw_mq / raw_ad), 255);
 
         double qualapprox = rec.getQualApprox();
 
