@@ -73,7 +73,7 @@ public class FeaturizedReadSets implements JumboGenotypeAnnotation {
         final Map<Allele, List<GATKRead>> readsByAllele = likelihoods.alleles().stream()
                 .collect(Collectors.toMap(a -> a, a -> new ArrayList<>()));
 
-        Utils.stream(likelihoods.bestAllelesBreakingTies())
+        Utils.stream(likelihoods.bestAllelesBreakingTies(g.getSampleName()))
                 .filter(ba -> ba.isInformative())
                 .forEach(ba -> readsByAllele.get(ba.allele).add(ba.evidence));
 
@@ -85,7 +85,7 @@ public class FeaturizedReadSets implements JumboGenotypeAnnotation {
         }
 
         final Map<GATKRead, Haplotype> bestHaplotypes = new HashMap<>();
-        haplotypeLikelihoods.bestAllelesBreakingTies().stream().forEach(ba ->
+        haplotypeLikelihoods.bestAllelesBreakingTies(g.getSampleName()).stream().forEach(ba ->
             ba.evidence.getReads().forEach(read -> bestHaplotypes.put(read, ba.allele)));
 
         final List<String> stringsInAlleleOrder = vc.getAlleles().stream()
