@@ -82,7 +82,7 @@ public final class ModelSegmentsIntegrationTest extends CommandLineProgramTest {
      * is set so that doubles in somatic CNV outputs will have 6 decimal places. We thus set the allowed delta
      * to detect differences at that level.
      */
-    private static final double ALLOWED_DELTA_FOR_DOUBLE_VALUES = 1E-6;
+    private static final double ALLOWED_DELTA_FOR_DOUBLE_VALUES = 1E-5;
 
     @Test
     public void testMetadata() {
