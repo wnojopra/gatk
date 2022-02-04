@@ -56,12 +56,12 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
         final List<String> transmittedSingletonChildren = new ArrayList<>();
         for (final Trio trio : trioSet) {
             if (vc.isBiallelic() &&
-                    PossibleDeNovo.contextHasTrioLikelihoods(vc, trio)) {
-                final int childGQ = vc.getGenotype(trio.getChildID()).getGQ();
-                final int momGQ = vc.getGenotype(trio.getMaternalID()).getGQ();
-                final int dadGQ = vc.getGenotype(trio.getPaternalID()).getGQ();
+                    PossibleDeNovo.contextHasTrioGQs(vc, trio)) {
+                final boolean childIsHighGQHet = vc.getGenotype(trio.getChildID()).isHet() && vc.getGenotype(trio.getChildID()).getGQ() > hi_GQ_threshold;
+                final boolean momIsHighGQHet = vc.getGenotype(trio.getMaternalID()).isHet() && vc.getGenotype(trio.getMaternalID()).getGQ() > hi_GQ_threshold;
+                final boolean dadIsHighGQHet = vc.getGenotype(trio.getPaternalID()).isHet() && vc.getGenotype(trio.getPaternalID()).getGQ() > hi_GQ_threshold;
 
-                if ((childGQ >= hi_GQ_threshold && momGQ >= hi_GQ_threshold) || (childGQ >= hi_GQ_threshold && dadGQ >= hi_GQ_threshold)) {
+                if ((childIsHighGQHet && momIsHighGQHet) || (childIsHighGQHet && dadIsHighGQHet)) {
                     transmittedSingletonChildren.add(trio.getChildID());
                 }
             }
