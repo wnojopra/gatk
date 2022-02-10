@@ -364,6 +364,21 @@ public class VariantAnnotatorIntegrationTest extends CommandLineProgramTest {
         Assert.assertEquals(lociWithHighConfidenceDeNovo, new int[] {10130767, 10197999});
     }
 
+    @Test
+    public void test() {
+        final ArgumentsBuilder args = new ArgumentsBuilder()
+                .add("V", "gs://fc-secure-851611e9-9a32-4726-aebc-d9235440b802/2e6bcf65-bea6-4b63-b443-2c73acccf256/scikitLearnVqsr/914395e5-2f5f-48e6-a356-22f2981818bc/call-GatherVcfs/FullHapMap2.filtered.vcf.gz")
+                //.add("V", "gs://fc-secure-851611e9-9a32-4726-aebc-d9235440b802/43d0ef22-3d3d-4f67-8429-f6e968e25950/SplitNYGenomes/693cfa77-0c9b-41c6-892c-e0d4ce8eb429/call-GatherVcfs/231_samples_NYGenomes.vcf.gz")
+                //.add("V", "gs://fc-fa6a7076-df42-486c-a82f-ac2397389dfc/944e9233-ca18-4634-b505-52a7eb176a88/ApplyFiltration/3f344ced-53ba-4f79-b568-0c9abe8cd4e5/call-GatherVcfs/HapMap_2_0.vcf.gz")
+                .add("O", "test_out.vcf")
+                .add("A", "PossibleDeNovo")
+                //.add("A", "TransmittedSingleton")
+                .add("ped", "/Users/mshand/Documents/SpecOpsWork/JukeBox/100G_and_GIAB.ped")
+                .add("L", "chr1:10646144");
+
+        runCommandLine(args.getArgsList());
+    }
+
     private static String keyForVariant( final VariantContext variant ) {
         return String.format("%s:%d-%d %s", variant.getContig(), variant.getStart(), variant.getEnd(), variant.getAlleles());
     }

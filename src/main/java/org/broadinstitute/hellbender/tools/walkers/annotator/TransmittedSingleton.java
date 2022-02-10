@@ -50,7 +50,7 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
                                         final AlleleLikelihoods<GATKRead, Allele> likelihoods) {
         Utils.nonNull(vc);
         Set<Trio> trioSet = initializeAndGetTrios();
-        if (trioSet.isEmpty() || vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) != 2) {
+        if (!vc.isBiallelic() || trioSet.isEmpty() || (vc.isBiallelic() && vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) != 2)) {
             return Collections.emptyMap();
         }
         final List<String> transmittedSingletonChildren = new ArrayList<>();
