@@ -89,9 +89,8 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - rsa_split_intervals_part_2
-         - kc_cluster_vqsr
-         - kc_quoting_bug
+         - rsa_intervals_flag
+         - rc-split-intervals-odd
    - name: GvsCreateAltAllele
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateAltAllele.wdl
