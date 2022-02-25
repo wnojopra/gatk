@@ -91,6 +91,7 @@ public class SplitIntervals extends GATKTool {
     public static final String PICARD_INTERVAL_FILE_EXTENSION = "interval_list";
     public static final String DEFAULT_EXTENSION = "-scattered." + PICARD_INTERVAL_FILE_EXTENSION;
 
+    public static final String INTERVAL_NUMBER_OF_DIGITS_FULL_NAME = "interval-file-num-digits";
     public static final int DEFAULT_NUMBER_OF_DIGITS = 4;  //to preserve backward compatibility
 
     @Argument(fullName = SCATTER_COUNT_LONG_NAME, shortName = SCATTER_COUNT_SHORT_NAME,
@@ -102,6 +103,9 @@ public class SplitIntervals extends GATKTool {
 
     @Argument(fullName = SUBDIVISION_MODE_lONG_NAME, shortName = SUBDIVISION_MODE_SHORT_NAME, doc = "How to divide intervals.")
     private IntervalListScatterMode subdivisionMode = IntervalListScatterMode.INTERVAL_SUBDIVISION;
+
+    @Argument(doc = "Number of digits to use when writing interval files", fullName = INTERVAL_NUMBER_OF_DIGITS_FULL_NAME, minValue = 1, optional = true)
+    public int numDigits = DEFAULT_NUMBER_OF_DIGITS;
 
     @Argument(doc = "The directory into which to write the scattered interval sub-directories.",
             fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME,
