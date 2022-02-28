@@ -18,9 +18,11 @@ import java.util.*;
 public final class TransmittedSingleton extends PedigreeAnnotation implements InfoFieldAnnotation {
     protected final Logger warning = LogManager.getLogger(this.getClass());
     private Set<Trio> trios;
-    private final int hi_GQ_threshold = 20;
+    private final int HI_GQ_THRESHOLD = 20;
+    private final int HI_DP_THRESHOLD = 20;
+    private final double CALL_RATE_THRESHOLD = 0.90;
 
-    public TransmittedSingleton(final Set<Trio> trios, final double minGenotypeQualityP) {
+    public TransmittedSingleton(final Set<Trio> trios) {
         super((Set<String>) null);
         this.trios = Collections.unmodifiableSet(new LinkedHashSet<>(trios));
     }
@@ -50,25 +52,53 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
                                         final AlleleLikelihoods<GATKRead, Allele> likelihoods) {
         Utils.nonNull(vc);
         Set<Trio> trioSet = initializeAndGetTrios();
-        if (!vc.isBiallelic() || trioSet.isEmpty() || (vc.isBiallelic() && vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) != 2)) {
+        if (!vc.isBiallelic() || trioSet.isEmpty()) {
             return Collections.emptyMap();
         }
-        final List<String> transmittedSingletonChildren = new ArrayList<>();
+        long highQualCalls = vc.getGenotypes().stream().filter(gt -> gt.getGQ() > HI_GQ_THRESHOLD).count();
+        if ((double) highQualCalls / vc.getNSamples() < CALL_RATE_THRESHOLD) {
+            return Collections.emptyMap();
+        }
+        final List<String> transmittedSingletonParent = new ArrayList<>();
+        final List<String> nonTransmittedSingletonParent = new ArrayList<>();
         for (final Trio trio : trioSet) {
             if (vc.isBiallelic() &&
                     PossibleDeNovo.contextHasTrioGQs(vc, trio)) {
-                final boolean childIsHighGQHet = vc.getGenotype(trio.getChildID()).isHet() && vc.getGenotype(trio.getChildID()).getGQ() > hi_GQ_threshold;
-                final boolean momIsHighGQHet = vc.getGenotype(trio.getMaternalID()).isHet() && vc.getGenotype(trio.getMaternalID()).getGQ() > hi_GQ_threshold;
-                final boolean dadIsHighGQHet = vc.getGenotype(trio.getPaternalID()).isHet() && vc.getGenotype(trio.getPaternalID()).getGQ() > hi_GQ_threshold;
+                final boolean childIsHighGQHet = vc.getGenotype(trio.getChildID()).isHet() && vc.getGenotype(trio.getChildID()).getGQ() >= HI_GQ_THRESHOLD;
+                final boolean momIsHighGQHet = vc.getGenotype(trio.getMaternalID()).isHet() && vc.getGenotype(trio.getMaternalID()).getGQ() >= HI_GQ_THRESHOLD;
+                final boolean dadIsHighGQHet = vc.getGenotype(trio.getPaternalID()).isHet() && vc.getGenotype(trio.getPaternalID()).getGQ() >= HI_GQ_THRESHOLD;
 
-                if ((childIsHighGQHet && momIsHighGQHet) || (childIsHighGQHet && dadIsHighGQHet)) {
-                    transmittedSingletonChildren.add(trio.getChildID());
+                final boolean momIsHighGQHomRef = vc.getGenotype(trio.getMaternalID()).isHomRef() && vc.getGenotype(trio.getMaternalID()).getGQ() >= HI_GQ_THRESHOLD;
+                final boolean dadIsHighGQHomRef = vc.getGenotype(trio.getPaternalID()).isHomRef() && vc.getGenotype(trio.getPaternalID()).getGQ() >= HI_GQ_THRESHOLD;
+                final boolean childIsHighGQHomRef = vc.getGenotype(trio.getChildID()).isHomRef() && vc.getGenotype(trio.getChildID()).getGQ() >= HI_GQ_THRESHOLD;
+
+                final boolean childIsHighDepth = vc.getGenotype(trio.getChildID()).getDP() >= HI_DP_THRESHOLD;
+                final boolean momIsHighDepth = vc.getGenotype(trio.getChildID()).getDP() >= HI_DP_THRESHOLD;
+                final boolean dadIsHighDepth = vc.getGenotype(trio.getChildID()).getDP() >= HI_DP_THRESHOLD;
+
+                if (childIsHighDepth && momIsHighDepth && dadIsHighDepth &&
+                        vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) == 2) {
+                    if (childIsHighGQHet && momIsHighGQHet && dadIsHighGQHomRef) {
+                        transmittedSingletonParent.add(trio.getMaternalID());
+                    } else if (childIsHighGQHet && dadIsHighGQHet && momIsHighGQHomRef) {
+                        transmittedSingletonParent.add(trio.getPaternalID());
+                    }
+                }
+                //TODO: This only works for trios (not quads or other more complicated family structures that would effect number of singletons for parents or transmission to multiple kids)
+                if (childIsHighDepth && momIsHighDepth && dadIsHighDepth &&
+                vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) == 1) {
+                    if (childIsHighGQHomRef && momIsHighGQHet && dadIsHighGQHomRef) {
+                        nonTransmittedSingletonParent.add(trio.getMaternalID());
+                    } else if (childIsHighGQHomRef && dadIsHighGQHet && momIsHighGQHomRef) {
+                        nonTransmittedSingletonParent.add(trio.getPaternalID());
+                    }
                 }
             }
         }
         final Map<String, Object> attributeMap = new LinkedHashMap<>(1);
-        if (!transmittedSingletonChildren.isEmpty()) {
-            attributeMap.put(GATKVCFConstants.TRANSMITTED_SINGLETON, transmittedSingletonChildren);
+        if (!transmittedSingletonParent.isEmpty()) {
+            attributeMap.put(GATKVCFConstants.TRANSMITTED_SINGLETON, transmittedSingletonParent);
+            attributeMap.put(GATKVCFConstants.NON_TRANSMITTED_SINGLETON, nonTransmittedSingletonParent);
         }
         return attributeMap;
     }

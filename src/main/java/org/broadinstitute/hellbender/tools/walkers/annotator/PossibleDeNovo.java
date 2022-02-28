@@ -75,6 +75,7 @@ public final class PossibleDeNovo extends PedigreeAnnotation implements InfoFiel
     public final static double DEFAULT_MIN_GENOTYPE_QUALITY_P = 0; // TODO should this be exposed as a command line argument?
     private static final int hi_GQ_threshold = 20; //WARNING - If you change this value, update the description in GATKVCFHeaderLines
     private static final int lo_GQ_threshold = 10; //WARNING - If you change this value, update the description in GATKVCFHeaderLines
+    private static final int hi_DP_threshold = 20;
     private static final double percentOfSamplesCutoff = 0.001; //for many, many samples use 0.1% of samples as allele frequency threshold for de novos
     private static final int flatNumberOfSamplesCutoff = 4;
 
@@ -113,7 +114,12 @@ public final class PossibleDeNovo extends PedigreeAnnotation implements InfoFiel
                 final int momGQ   = vc.getGenotype(trio.getMaternalID()).getGQ();
                 final int dadGQ   = vc.getGenotype(trio.getPaternalID()).getGQ();
 
-                if (childGQ >= hi_GQ_threshold && momGQ >= hi_GQ_threshold && dadGQ >= hi_GQ_threshold) {
+                final int childDP = vc.getGenotype(trio.getChildID()).getDP();
+                final int momDP   = vc.getGenotype(trio.getMaternalID()).getDP();
+                final int dadDP   = vc.getGenotype(trio.getPaternalID()).getDP();
+
+                if (childGQ >= hi_GQ_threshold && momGQ >= hi_GQ_threshold && dadGQ >= hi_GQ_threshold &&
+                    childDP >= hi_DP_threshold && momDP >= hi_DP_threshold && dadDP >= hi_DP_threshold) {
                     highConfDeNovoChildren.add(trio.getChildID());
                 } else if (childGQ >= lo_GQ_threshold && momGQ > 0 && dadGQ > 0) {
                     lowConfDeNovoChildren.add(trio.getChildID());
