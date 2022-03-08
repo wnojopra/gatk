@@ -44,7 +44,7 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
 
     @Override
     public List<String> getKeyNames() {
-        return Arrays.asList(GATKVCFConstants.TRANSMITTED_SINGLETON);
+        return Arrays.asList(GATKVCFConstants.TRANSMITTED_SINGLETON, GATKVCFConstants.NON_TRANSMITTED_SINGLETON);
     }
     @Override
     public Map<String, Object> annotate(final ReferenceContext ref,
@@ -86,7 +86,7 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
                 }
                 //TODO: This only works for trios (not quads or other more complicated family structures that would effect number of singletons for parents or transmission to multiple kids)
                 if (childIsHighDepth && momIsHighDepth && dadIsHighDepth &&
-                vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) == 1) {
+                        vc.getAttributeAsInt(VCFConstants.ALLELE_COUNT_KEY, 0) == 1) {
                     if (childIsHighGQHomRef && momIsHighGQHet && dadIsHighGQHomRef) {
                         nonTransmittedSingletonParent.add(trio.getMaternalID());
                     } else if (childIsHighGQHomRef && dadIsHighGQHet && momIsHighGQHomRef) {
@@ -98,6 +98,8 @@ public final class TransmittedSingleton extends PedigreeAnnotation implements In
         final Map<String, Object> attributeMap = new LinkedHashMap<>(1);
         if (!transmittedSingletonParent.isEmpty()) {
             attributeMap.put(GATKVCFConstants.TRANSMITTED_SINGLETON, transmittedSingletonParent);
+        }
+        if (!nonTransmittedSingletonParent.isEmpty()) {
             attributeMap.put(GATKVCFConstants.NON_TRANSMITTED_SINGLETON, nonTransmittedSingletonParent);
         }
         return attributeMap;
