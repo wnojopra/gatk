@@ -61,12 +61,12 @@ public class GnarlyGenotyperEngineUnitTest {
         final VariantContext vc = VariantContextTestUtils.makeVC("test", Arrays.asList(Aref, oneInserted, twoInserted, threeInserted, fourRepeats, fiveRepeats), g1, g2);
 
         final GenotypeBuilder builder1 = new GenotypeBuilder(g1);
-        engine.makeGenotypeCall(builder1, GenotypeLikelihoods.fromPLs(sample1pls).getAsVector(), Arrays.asList(Aref, oneInserted, twoInserted, threeInserted, fourRepeats, fiveRepeats));
+        engine.makeGenotypeCall(g1, builder1, GenotypeLikelihoods.fromPLs(sample1pls).getAsVector(), Arrays.asList(Aref, oneInserted, twoInserted, threeInserted, fourRepeats, fiveRepeats));
         final List<Allele> calledAlleles1 = builder1.make().getAlleles();
         Assert.assertTrue(calledAlleles1.size() == 2 && calledAlleles1.contains(oneInserted) && calledAlleles1.contains(twoInserted));
 
         final GenotypeBuilder builder2 = new GenotypeBuilder(g2);
-        engine.makeGenotypeCall(builder2, GenotypeLikelihoods.fromPLs(sample2pls).getAsVector(), Arrays.asList(Aref, oneInserted, twoInserted, threeInserted, fourRepeats, fiveRepeats));
+        engine.makeGenotypeCall(g2, builder2, GenotypeLikelihoods.fromPLs(sample2pls).getAsVector(), Arrays.asList(Aref, oneInserted, twoInserted, threeInserted, fourRepeats, fiveRepeats));
         final List<Allele> calledAlleles2 = builder2.make().getAlleles();
         Assert.assertTrue(calledAlleles2.size() == 2 && calledAlleles2.contains(Aref) && calledAlleles2.contains(oneInserted));
     }
