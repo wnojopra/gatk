@@ -331,16 +331,11 @@ public final class GnarlyGenotyperEngine {
             final GenotypeBuilder genotypeBuilder = new GenotypeBuilder(g);
             genotypeBuilder.name(name);
             if (isGDBnoCall(g) || g.getAlleles().contains(Allele.NON_REF_ALLELE)) {
-                genotypeBuilder.alleles(GATKVariantContextUtils.noCallAlleles(g.getPloidy()));
+                genotypeBuilder.alleles(GATKVariantContextUtils.noCallAlleles(g.getPloidy())).noGQ();
             }
-            else if (nonRefReturned) {
-                if (g.hasAD()) {
-                    final int[] AD = trimADs(g, targetAlleles.size());
-                    genotypeBuilder.AD(AD);
-                }
-                else if (g.countAllele(Allele.NON_REF_ALLELE) > 0) {
-                    genotypeBuilder.alleles(GATKVariantContextUtils.noCallAlleles(g.getPloidy())).noGQ();
-                }
+            if (nonRefReturned && g.hasAD()) {
+                final int[] AD = trimADs(g, targetAlleles.size());
+                genotypeBuilder.AD(AD);
             }
             if (g.hasPL()) {
                 //lookup PL size from cache if ploidy matches and cache has our number of alts

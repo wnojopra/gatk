@@ -56,9 +56,9 @@ public class GnarlyGenotyperIntegrationTest extends CommandLineProgramTest {
     @DataProvider(name="VCFdata")
     public Object[][] getVCFdata() {
         return new Object[][]{
-                //chrX haploid sample plus diploid sample
+                //chrX haploid sample plus diploid sample -- expected results validated with vcf-validator (samtools?)
                 {new File[]{getTestFile("NA12891.chrX.haploid.rb.g.vcf"), getTestFile("NA12892.chrX.diploid.rb.g.vcf")},
-                        getTestFile("lotsOfAltsNoPLs.vcf"), null, Arrays.asList(new SimpleInterval("chrX", 1000000, 5000000)), Arrays.asList("--merge-input-intervals", "--only-output-calls-starting-in-intervals"), b38_reference_20_21},
+                        getTestFile("haploidPlusDiploid.expected.vcf"), null, Arrays.asList(new SimpleInterval("chrX", 1000000, 5000000)), Arrays.asList("--merge-input-intervals", "--only-output-calls-starting-in-intervals"), b38_reference_20_21},
 
                 //8 ALT alleles -- no PLs
                 {new File[]{getTestFile("sample6.vcf"), getTestFile("sample7.vcf"), getTestFile("sample8.vcf"), getTestFile("sample9.vcf")},
