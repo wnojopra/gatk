@@ -1,7 +1,7 @@
 version 1.0
 
-import "GvsAssignIds.wdl" as GvsAssignIds
-import "GvsImportGenomes.wdl" as GvsImportGenomes
+import "GvsAssignIds.wdl" as AssignIds
+import "GvsImportGenomes.wdl" as ImportGenomes
 
 workflow GvsQuickstart {
     input {
@@ -28,7 +28,7 @@ workflow GvsQuickstart {
         # End GvsImportGenomes
     }
 
-    call GvsAssignIds.GvsAssignIds {
+    call AssignIds.GvsAssignIds as AssignIds {
         input:
             dataset_name = dataset_name,
             project_id = project_id,
@@ -38,9 +38,9 @@ workflow GvsQuickstart {
             service_account_json_path = service_account_json_path
     }
 
-    call GvsImportGenomes.GvsImportGenomes {
+    call ImportGenomes.GvsImportGenomes {
         input:
-            go = GvsAssignIds.gvs_ids_created,
+            go = AssignIds.gvs_ids_created,
             dataset_name = dataset_name,
             project_id = project_id,
             external_sample_names = external_sample_names,
