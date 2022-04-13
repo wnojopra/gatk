@@ -3,6 +3,7 @@ version 1.0
 workflow GvsImportGenomes {
 
   input {
+    Boolean go
     String dataset_name
     String project_id
 
