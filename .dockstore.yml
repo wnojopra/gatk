@@ -186,7 +186,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_367_integration_test_of_quickstart
+         - vs_357_integration_test_of_quickstart
    - name: MitochondriaPipeline
      subclass: WDL
      primaryDescriptorPath: /scripts/mitochondria_m2_wdl/MitochondriaPipeline.wdl
