@@ -19,8 +19,9 @@ workflow GvsQuickstart {
         # Begin GvsImportGenomes
         Array[File] input_vcfs
         Array[File] input_vcf_indexes
-
         File interval_list = "gs://gcp-public-data--broad-references/hg38/v0/wgs_calling_regions.hg38.noCentromeres.noTelomeres.interval_list"
+
+        Int? load_data_preemptible_override
 
         # Is this specific version of the gatk still needed? We'll find out!
         # File? load_data_gatk_override = "gs://broad-dsp-spec-ops/scratch/bigquery-jointcalling/jars/ah_var_store_20220406/gatk-package-4.2.0.0-480-gb62026a-SNAPSHOT-local.jar"
