@@ -265,7 +265,7 @@ def make_extract_table(control_samples,
 
     ## TODO -- provide a cmdline arg to override this (so we can simulate smaller datasets)
 
-    global REF_VET_TABLE_COUNT ## TODO why are we using PET here?
+    global REF_VET_TABLE_COUNT
     REF_VET_TABLE_COUNT = max_tables
 
     global TEMP_TABLE_TTL_HOURS
