@@ -26,6 +26,7 @@ import org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -131,13 +132,14 @@ public final class CreateVariantIngestFiles extends VariantWalker {
     )
     public String datasetName = null;
 
-
     @Argument(
             fullName = "force-loading-from-non-allele-specific",
             doc = "Even if there are allele-specific (AS) annotations, use backwards compatibility mode",
             optional = true
     )
     public boolean forceLoadingFromNonAlleleSpecific = false;
+
+    private boolean shouldWriteLoadStatusStarted = true;
 
     // getGenotypes() returns list of lists for all samples at variant
     // assuming one sample per gvcf, getGenotype(0) retrieves GT for sample at index 0
@@ -203,7 +205,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
             vetCreator = new VetCreator(sampleIdentifierForOutputFileName, sampleId, tableNumber, outputDir, outputType, projectID, datasetName, forceLoadingFromNonAlleleSpecific);
         }
 
-        // check the load status table to see if this sample has already been loaded...
+        // Check the load status table to see if this sample has already been loaded.
         if (outputType == CommonCode.OutputType.BQ) {
             loadStatus = new LoadStatus(projectID, datasetName, loadStatusTableName);
 
@@ -217,7 +219,33 @@ public final class CreateVariantIngestFiles extends VariantWalker {
                 logger.info("Sample id " + sampleId + " was detected as already loaded, exiting successfully.");
                 System.exit(0);
             } else if (state == LoadStatus.LoadState.PARTIAL) {
-                throw new GATKException("The loading for sample id " + sampleId + " into the _" + tableNumber + " table(s) was interrupted before it was able to complete successfully.");
+                boolean refRangesRowsExist = true;
+                if (enableReferenceRanges && refCreator != null) {
+                    refRangesRowsExist = refCreator.getRowsExist();
+                }
+                boolean vetRowsExist = true;
+                if (enableVet && vetCreator != null) {
+                    vetRowsExist = vetCreator.getRowsExist();
+                }
+
+                if (refRangesRowsExist && vetRowsExist) {
+                    // Write the status finished row and exit 0.
+                    logger.warn("Found load status started row with populated vet and ref ranges tables, writing load status finished row for sample name = {}, id = {}",
+                            sampleName, sampleId);
+                    loadStatus.writeLoadStatusFinished(Long.parseLong(sampleId));
+                    System.exit(0);
+                }
+
+                // Write vet and/or ref_ranges if they need to be written, but do not write the started status as that
+                // was already written.
+                List<String> tablesWithRows = new ArrayList<>();
+                if (enableVet && !vetRowsExist) tablesWithRows.add("vet");
+                if (enableReferenceRanges && !refRangesRowsExist) tablesWithRows.add("ref_ranges");
+
+                logger.warn("Found load status started row and existing rows in {} for sample id = {}, name = {}",
+                        String.join(" and ", tablesWithRows), sampleName, sampleId);
+                logger.warn("Writing tables: vet = {}, ref_ranges = {}", enableVet, enableReferenceRanges);
+                shouldWriteLoadStatusStarted = false;
             }
         }
     }
@@ -247,15 +275,15 @@ public final class CreateVariantIngestFiles extends VariantWalker {
         try {
             // write to VET if NOT reference block and NOT a no call
             if (!variant.isReferenceBlock() && !isNoCall(variant)) {
-                if (enableVet) vetCreator.apply(variant);
+                if (enableVet && vetCreator != null) vetCreator.apply(variant);
             }
         } catch (IOException ioe) {
             throw new GATKException("Error writing VET", ioe);
         }
 
         try {
-            if (refCreator != null) {
-                if (enableReferenceRanges) refCreator.apply(variant, intervalsToWrite);
+            if (enableReferenceRanges && refCreator != null) {
+                refCreator.apply(variant, intervalsToWrite);
             }
         } catch (IOException ioe) {
             throw new GATKException("Error writing reference ranges", ioe);
@@ -264,11 +292,11 @@ public final class CreateVariantIngestFiles extends VariantWalker {
 
     @Override
     public Object onTraversalSuccess() {
-        if (outputType == CommonCode.OutputType.BQ) {
+        if (outputType == CommonCode.OutputType.BQ && shouldWriteLoadStatusStarted) {
             loadStatus.writeLoadStatusStarted(Long.parseLong(sampleId));
         }
 
-        if (refCreator != null) {
+        if (enableReferenceRanges && refCreator != null) {
             try {
                 refCreator.writeMissingIntervals(intervalArgumentGenomeLocSortedSet);
             } catch (IOException ioe) {
@@ -278,7 +306,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
             refCreator.commitData();
         }
 
-        if (vetCreator != null && enableVet) {
+        if (enableVet && vetCreator != null) {
             vetCreator.commitData();
         }
 

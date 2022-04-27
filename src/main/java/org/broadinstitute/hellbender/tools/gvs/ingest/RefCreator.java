@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils.checkIfRowsExistForSampleId;
+
 
 public final class RefCreator {
     private static final Logger logger = LogManager.getLogger(RefCreator.class);
@@ -36,7 +38,7 @@ public final class RefCreator {
     private final GenomeLocSortedSet coverageLocSortedSet;
     private static final String PREFIX_SEPARATOR = "_";
     private final static String REF_RANGES_FILETYPE_PREFIX = "ref_ranges_";
-
+    private boolean rowsExist;
 
     public RefCreator(String sampleIdentifierForOutputFileName, String sampleId, String tableNumber, SAMSequenceDictionary seqDictionary, GQStateEnum gqStateToIgnore, final boolean dropAboveGqThreshold, final File outputDirectory, final CommonCode.OutputType outputType, final boolean writeReferenceRanges, final String projectId, final String datasetName) {
         this.sampleId = sampleId;
@@ -53,7 +55,10 @@ public final class RefCreator {
                         if (projectId == null || datasetName == null) {
                             throw new UserException("Must specify project-id and dataset-name when using BQ output mode.");
                         }
-                        refRangesWriter = new RefRangesBQWriter(projectId, datasetName,REF_RANGES_FILETYPE_PREFIX + tableNumber);
+                        rowsExist = checkIfRowsExistForSampleId(projectId, datasetName, REF_RANGES_FILETYPE_PREFIX + tableNumber, sampleId);
+                        if (!rowsExist) {
+                            refRangesWriter = new RefRangesBQWriter(projectId, datasetName, REF_RANGES_FILETYPE_PREFIX + tableNumber);
+                        }
                         break;
                     case TSV:
                         refRangesWriter = new RefRangesTsvWriter(refOutputFile.getCanonicalPath());
@@ -74,6 +79,8 @@ public final class RefCreator {
     }
 
     public void apply(VariantContext variant, List<GenomeLoc> intervalsToWrite) throws IOException {
+        if (refRangesWriter == null) return;
+
         final String variantChr = variant.getContig();
 
         for (GenomeLoc genomeLoc : intervalsToWrite) {
@@ -198,7 +205,7 @@ public final class RefCreator {
     }
 
     public void writeMissingPositions(long start, long end) throws IOException {
-        if (writeReferenceRanges) {
+        if (refRangesWriter != null && writeReferenceRanges) {
             // break up missing blocks to be no longer than MAX_REFERENCE_BLOCK_SIZE
             long localStart = start;
             while ( localStart <= end ) {
@@ -289,5 +296,9 @@ public final class RefCreator {
         } catch (final Exception e) {
             throw new IllegalArgumentException("Couldn't close reference ranges writer", e);
         }
+    }
+
+    public boolean getRowsExist() {
+        return rowsExist;
     }
 }

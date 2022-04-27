@@ -1,12 +1,16 @@
 package org.broadinstitute.hellbender.tools.gvs.ingest;
 
+import com.google.cloud.bigquery.FieldValueList;
+import com.google.cloud.bigquery.TableResult;
 import com.google.protobuf.Descriptors;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.gvs.common.CommonCode;
 import org.broadinstitute.hellbender.tools.gvs.common.IngestConstants;
 import org.broadinstitute.hellbender.tools.gvs.common.SchemaUtils;
+import org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils;
 import org.broadinstitute.hellbender.utils.bigquery.PendingBQWriter;
 import org.broadinstitute.hellbender.utils.tsv.SimpleXSVWriter;
 import org.json.JSONObject;
@@ -19,6 +23,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils.checkIfRowsExistForSampleId;
+
 public class VetCreator {
     private final CommonCode.OutputType outputType;
 
@@ -26,6 +32,8 @@ public class VetCreator {
     private final String sampleId;
     private PendingBQWriter vetBQJsonWriter = null;
     private final boolean forceLoadingFromNonAlleleSpecific;
+
+    private boolean rowsExist;
 
     public VetCreator(String sampleIdentifierForOutputFileName, String sampleId, String tableNumber, final File outputDirectory, final CommonCode.OutputType outputType, final String projectId, final String datasetName, final boolean forceLoadingFromNonAlleleSpecific) {
         this.sampleId = sampleId;
@@ -40,8 +48,10 @@ public class VetCreator {
                     if (projectId == null || datasetName == null) {
                         throw new UserException("Must specify project-id and dataset-name when using BQ output mode.");
                     }
-                    vetBQJsonWriter = new PendingBQWriter(projectId, datasetName, VET_FILETYPE_PREFIX + tableNumber);
-
+                    rowsExist = checkIfRowsExistForSampleId(projectId, datasetName, VET_FILETYPE_PREFIX + tableNumber, sampleId);
+                    if (!rowsExist) {
+                        vetBQJsonWriter = new PendingBQWriter(projectId, datasetName, VET_FILETYPE_PREFIX + tableNumber);
+                    }
                     break;
                 case TSV:
                     // If the vet directory inside it doesn't exist yet -- create it
@@ -66,7 +76,8 @@ public class VetCreator {
         switch(outputType) {
             case BQ:
                 try {
-                    vetBQJsonWriter.addJsonRow(createJson(location, variant, Long.parseLong(sampleId)));
+                    if (vetBQJsonWriter != null)
+                        vetBQJsonWriter.addJsonRow(createJson(location, variant, Long.parseLong(sampleId)));
                 } catch (Descriptors.DescriptorValidationException | ExecutionException | InterruptedException ex) {
                     throw new IOException("BQ exception", ex);
                 }
@@ -133,5 +144,9 @@ public class VetCreator {
         if (vetBQJsonWriter != null) {
             vetBQJsonWriter.close();
         }
+    }
+
+    public boolean getRowsExist() {
+        return rowsExist;
     }
 }
