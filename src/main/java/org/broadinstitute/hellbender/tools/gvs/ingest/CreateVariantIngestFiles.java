@@ -196,13 +196,26 @@ public final class CreateVariantIngestFiles extends VariantWalker {
         final GenomeLocParser genomeLocParser = new GenomeLocParser(seqDictionary);
         intervalArgumentGenomeLocSortedSet = GenomeLocSortedSet.createSetFromList(genomeLocParser, IntervalUtils.genomeLocsFromLocatables(genomeLocParser, intervalArgumentCollection.getIntervals(seqDictionary)));
 
+        boolean refRangesRowsExist = false;
         if (enableReferenceRanges) {
-            //noinspection ConstantConditions
-            refCreator = new RefCreator(sampleIdentifierForOutputFileName, sampleId, tableNumber, seqDictionary, gqStateToIgnore, dropAboveGqThreshold, outputDir, outputType, enableReferenceRanges, projectID, datasetName);
+            refRangesRowsExist = RefCreator.rowsExistFor(projectID, datasetName, tableNumber, sampleId);
+            if (refRangesRowsExist) {
+                logger.warn("Reference ranges enabled for sample id = {}, name = {} but preexisting ref_ranges rows found, skipping ref_ranges writes.",
+                        sampleId, sampleName);
+            } else {
+                refCreator = new RefCreator(sampleIdentifierForOutputFileName, sampleId, tableNumber, seqDictionary, gqStateToIgnore, dropAboveGqThreshold, outputDir, outputType, enableReferenceRanges, projectID, datasetName);
+            }
         }
 
+        boolean vetRowsExist = false;
         if (enableVet) {
-            vetCreator = new VetCreator(sampleIdentifierForOutputFileName, sampleId, tableNumber, outputDir, outputType, projectID, datasetName, forceLoadingFromNonAlleleSpecific);
+            vetRowsExist = VetCreator.rowsExistFor(projectID, datasetName, tableNumber, sampleId);
+            if (vetRowsExist) {
+                logger.warn("Vet enabled for sample id = {}, name = {} but preexisting vet rows found, skipping vet writes.",
+                        sampleId, sampleName);
+            } else {
+                vetCreator = new VetCreator(sampleIdentifierForOutputFileName, sampleId, tableNumber, outputDir, outputType, projectID, datasetName, forceLoadingFromNonAlleleSpecific);
+            }
         }
 
         // Check the load status table to see if this sample has already been loaded.
@@ -219,15 +232,6 @@ public final class CreateVariantIngestFiles extends VariantWalker {
                 logger.info("Sample id " + sampleId + " was detected as already loaded, exiting successfully.");
                 System.exit(0);
             } else if (state == LoadStatus.LoadState.PARTIAL) {
-                boolean refRangesRowsExist = true;
-                if (enableReferenceRanges && refCreator != null) {
-                    refRangesRowsExist = refCreator.getRowsExist();
-                }
-                boolean vetRowsExist = true;
-                if (enableVet && vetCreator != null) {
-                    vetRowsExist = vetCreator.getRowsExist();
-                }
-
                 if (refRangesRowsExist && vetRowsExist) {
                     // Write the status finished row and exit 0.
                     logger.warn("Found load status started row with populated vet and ref ranges tables, writing load status finished row for sample name = {}, id = {}",
@@ -236,15 +240,10 @@ public final class CreateVariantIngestFiles extends VariantWalker {
                     System.exit(0);
                 }
 
-                // Write vet and/or ref_ranges if they need to be written, but do not write the started status as that
-                // was already written.
-                List<String> tablesWithRows = new ArrayList<>();
-                if (enableVet && !vetRowsExist) tablesWithRows.add("vet");
-                if (enableReferenceRanges && !refRangesRowsExist) tablesWithRows.add("ref_ranges");
-
-                logger.warn("Found load status started row and existing rows in {} for sample id = {}, name = {}",
-                        String.join(" and ", tablesWithRows), sampleName, sampleId);
-                logger.warn("Writing tables: vet = {}, ref_ranges = {}", enableVet, enableReferenceRanges);
+                // Log that we're going to write the vet and/or ref_ranges rows as appropriate.
+                logger.warn("Found load status started row for sample id = {}, name = {}, writing tables: vet = {}, ref_ranges = {}",
+                        sampleName, sampleId, enableVet && !vetRowsExist, enableReferenceRanges && !refRangesRowsExist);
+                //  Do not write the started status as that has already been written.
                 shouldWriteLoadStatusStarted = false;
             }
         }

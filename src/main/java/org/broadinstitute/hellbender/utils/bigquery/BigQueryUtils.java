@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.utils.bigquery;
 
 import com.google.cloud.bigquery.*;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.apache.ivy.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -469,7 +468,7 @@ public final class BigQueryUtils {
         return handleCausalStatusRuntimeException(t, t);
     }
 
-    public static boolean checkIfRowsExistForSampleId(String projectID, String datasetName, String tableName, String sampleId) {
+    public static boolean rowsExistFor(String projectID, String datasetName, String tableName, String sampleId) {
         String template = "SELECT COUNT(*) FROM `%s.%s.%s` WHERE %s = %s";
         String query = String.format(template, projectID, datasetName, tableName, SchemaUtils.SAMPLE_ID_FIELD_NAME, sampleId);
 
