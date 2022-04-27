@@ -16,17 +16,15 @@ import org.broadinstitute.hellbender.engine.ReadsContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.VariantWalker;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.tools.gvs.common.ChromosomeEnum;
-import org.broadinstitute.hellbender.tools.gvs.common.CommonCode;
-import org.broadinstitute.hellbender.tools.gvs.common.GQStateEnum;
-import org.broadinstitute.hellbender.tools.gvs.common.IngestConstants;
-import org.broadinstitute.hellbender.tools.gvs.common.IngestUtils;
-import org.broadinstitute.hellbender.utils.*;
+import org.broadinstitute.hellbender.tools.gvs.common.*;
+import org.broadinstitute.hellbender.utils.GenomeLoc;
+import org.broadinstitute.hellbender.utils.GenomeLocParser;
+import org.broadinstitute.hellbender.utils.GenomeLocSortedSet;
+import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
