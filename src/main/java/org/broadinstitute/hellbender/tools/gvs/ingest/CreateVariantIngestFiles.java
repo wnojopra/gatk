@@ -231,9 +231,9 @@ public final class CreateVariantIngestFiles extends VariantWalker {
                 logger.info("Sample id " + sampleId + " was detected as already loaded, exiting successfully.");
                 System.exit(0);
             } else if (state == LoadStatus.LoadState.PARTIAL) {
-                if (refRangesRowsExist && vetRowsExist) {
+                if ((refRangesRowsExist || !enableReferenceRanges) && (vetRowsExist || !enableVet)) {
                     // Write the status finished row and exit 0.
-                    logger.warn("Found load status started row with populated vet and ref ranges tables, writing load status finished row for sample name = {}, id = {}",
+                    logger.warn("Found load status started row with vet and ref ranges tables as expected, writing load status finished row for sample name = {}, id = {}",
                             sampleName, sampleId);
                     loadStatus.writeLoadStatusFinished(Long.parseLong(sampleId));
                     System.exit(0);
@@ -241,7 +241,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
 
                 // Log that we're going to write the vet and/or ref_ranges rows as appropriate.
                 logger.warn("Found load status started row for sample id = {}, name = {}, writing tables: vet = {}, ref_ranges = {}",
-                        sampleId, sampleName, enableVet && !vetRowsExist, enableReferenceRanges && !refRangesRowsExist);
+                        sampleId, sampleName, !vetRowsExist && enableVet, !refRangesRowsExist && enableReferenceRanges);
                 // Do not write the started status as that has already been written.
                 shouldWriteLoadStatusStarted = false;
             }
