@@ -253,13 +253,13 @@ public final class CreateVariantIngestFiles extends VariantWalker {
             throw new GATKException("Error writing VET", ioe);
         }
 
-        try {
-            if (refCreator != null) {
-                if (enableReferenceRanges) refCreator.apply(variant, intervalsToWrite);
-            }
-        } catch (IOException ioe) {
-            throw new GATKException("Error writing reference ranges", ioe);
-        }
+//        try {
+//            if (refCreator != null) {
+//                if (enableReferenceRanges) refCreator.apply(variant, intervalsToWrite);
+//            }
+//        } catch (IOException ioe) {
+//            throw new GATKException("Error writing reference ranges", ioe);
+//        }
     }
 
     @Override
