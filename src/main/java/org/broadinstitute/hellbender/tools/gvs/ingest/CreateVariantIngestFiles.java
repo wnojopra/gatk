@@ -241,7 +241,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
 
                 // Log that we're going to write the vet and/or ref_ranges rows as appropriate.
                 logger.warn("Found load status started row for sample id = {}, name = {}, writing tables: vet = {}, ref_ranges = {}",
-                        sampleName, sampleId, enableVet && !vetRowsExist, enableReferenceRanges && !refRangesRowsExist);
+                        sampleId, sampleName, enableVet && !vetRowsExist, enableReferenceRanges && !refRangesRowsExist);
                 // Do not write the started status as that has already been written.
                 shouldWriteLoadStatusStarted = false;
             }
