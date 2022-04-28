@@ -26,6 +26,7 @@ import org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Ingest variant walker
@@ -289,7 +290,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
 
     @Override
     public Object onTraversalSuccess() {
-        int mod = (int) (Math.random() % 10);
+        int mod = new Random().nextInt(10);
 
         if (outputType == CommonCode.OutputType.BQ && shouldWriteLoadStatusStarted) {
             loadStatus.writeLoadStatusStarted(Long.parseLong(sampleId));
