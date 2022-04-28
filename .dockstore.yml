@@ -125,7 +125,6 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_262_partial_loading_robustitude
    - name: GvsPrepareRangesCallset
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPrepareRangesCallset.wdl
