@@ -226,7 +226,7 @@ public final class CreateVariantIngestFiles extends VariantWalker {
     public void apply(final VariantContext variant, final ReadsContext readsContext, final ReferenceContext referenceContext, final FeatureContext featureContext) {
 
         // get the intervals this variant covers
-        final GenomeLoc variantGenomeLoc = intervalArgumentGenomeLocSortedSet.getGenomeLocParser().createGenomeLoc(variant.getContig(), variant.getStart(), variant.getEnd());
+        final GenomeLoc variantGenomeLoc = intervalArgumentGenomeLocSortedSet.getGenomeLocParser().createGenomeLoc(variant.getContig(), variant.getStart() + 1, variant.getEnd());
         final List<GenomeLoc> intervalsToWrite = intervalArgumentGenomeLocSortedSet.getOverlapping(variantGenomeLoc);
 
         if (intervalsToWrite.size() == 0){
@@ -253,13 +253,13 @@ public final class CreateVariantIngestFiles extends VariantWalker {
             throw new GATKException("Error writing VET", ioe);
         }
 
-//        try {
-//            if (refCreator != null) {
-//                if (enableReferenceRanges) refCreator.apply(variant, intervalsToWrite);
-//            }
-//        } catch (IOException ioe) {
-//            throw new GATKException("Error writing reference ranges", ioe);
-//        }
+        try {
+            if (refCreator != null) {
+                if (enableReferenceRanges) refCreator.apply(variant, intervalsToWrite);
+            }
+        } catch (IOException ioe) {
+            throw new GATKException("Error writing reference ranges", ioe);
+        }
     }
 
     @Override
