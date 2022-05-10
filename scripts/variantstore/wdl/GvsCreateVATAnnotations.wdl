@@ -134,7 +134,7 @@ task ExtractAnAcAfFromVCF {
         bcftools annotate -x ^INFO/AC,INFO/AF,INFO/AN,^FORMAT/FT,FORMAT/GT -O b -o filtered.bcf
 
         echo_date "VAT: normalize, left align and split multi allelic sites to new lines, remove duplicate lines"
-        bcftools norm --threads 4 -m- --check-ref w -f Homo_sapiens_assembly38.fasta filtered.bcf -O b -o normalized.bcf
+        bcftools norm --threads 4 -m- --do-not-normalize filtered.bcf -O b -o normalized.bcf
         rm filtered.bcf
 
         echo_date "VAT: filter out spanning deletions and variants with an AC of 0, respect the FT flag"
