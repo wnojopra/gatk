@@ -143,6 +143,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - rc-remove-normalization
    - name: GvsCreateVATAnnotations
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateVATAnnotations.wdl
