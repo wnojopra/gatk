@@ -202,7 +202,7 @@ public enum VetFieldEnum {
             if (out.startsWith("|")) {
                 out = out.substring(1);
             } else {
-                throw new UserException("Expected AS_RAW_MQRankSum value to begin with a |");
+                throw new UserException("Expected AS_QUALapprox value to begin with a |");
             }
             // check to see if there are two or three values, make sure last is smallest, throw out last
             List<String> outList = Arrays.asList(out.split("\\|"));
