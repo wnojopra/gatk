@@ -11,6 +11,9 @@ workflow GvsCreateAltAllele {
     String? service_account_json_path
   }
 
+  String fq_gvs_dataset = "~{project_id}.~{dataset_name}"
+  String fq_alt_allele_table = "~{fq_gvs_dataset}.alt_allele"
+
   call GetVetTableNames {
     input:
       dataset_name = dataset_name,
@@ -28,7 +31,7 @@ workflow GvsCreateAltAllele {
   call Utils.GetBQTableLastModifiedDatetime {
     input:
       query_project = project_id,
-      fq_table = "alt_allele",
+      fq_table = fq_alt_allele_table,
       service_account_json_path = service_account_json_path
   }
 
