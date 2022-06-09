@@ -97,6 +97,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - rc-fix-fq-bug
    - name: GvsCreateTables
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsCreateTables.wdl
