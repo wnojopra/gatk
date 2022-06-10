@@ -222,7 +222,7 @@ task GetBQTablesMaxLastModifiedTimestamp {
     echo "project_id = ~{query_project}" > ~/.bigqueryrc
 
     bq --location=US --project_id=~{query_project} query --format=csv --use_legacy_sql=false \
-    "SELECT UNIX_MICROS(MAX(last_modified_time)) last_modified_time FROM \`~{data_project}\`.~{data_dataset}.INFORMATION_SCHEMA.PARTITIONS WHERE table_name like '~{sep="' OR table_name like '" table_patterns}'" > results.txt
+    "SELECT UNIX_MICROS(MAX(last_modified_time)) last_modified_time FROM `~{data_project}.~{data_dataset}.INFORMATION_SCHEMA.PARTITIONS` WHERE table_name like '~{sep="' OR table_name like '" table_patterns}'" > results.txt
 
     tail -1 results.txt | cut -d, -f1 > max_last_modified_timestamp.txt
   >>>

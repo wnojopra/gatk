@@ -326,7 +326,7 @@ task GetUningestedSampleIds {
 
     # get the current maximum id, or 0 if there are none
     bq --project_id=~{project_id} query --format=csv --use_legacy_sql=false \
-      "SELECT IFNULL(MIN(sample_id),0) as min, IFNULL(MAX(sample_id),0) as max FROM \`~{dataset_name}.~{table_name}\` AS samples JOIN \`${TEMP_TABLE}\` AS temp ON samples.sample_name=temp.sample_name" > results
+      "SELECT IFNULL(MIN(sample_id),0) as min, IFNULL(MAX(sample_id),0) as max FROM `~{dataset_name}.~{table_name}` AS samples JOIN `${TEMP_TABLE}` AS temp ON samples.sample_name=temp.sample_name" > results
 
     # prep for being able to return min table id
     min_sample_id=$(tail -1 results | cut -d, -f1)
@@ -343,7 +343,7 @@ task GetUningestedSampleIds {
 
     # get sample map of samples that haven't been loaded yet
     bq --project_id=~{project_id} query --format=csv --use_legacy_sql=false -n ~{num_samples} \
-      "SELECT sample_id, samples.sample_name FROM \`~{dataset_name}.~{table_name}\` AS samples JOIN \`${TEMP_TABLE}\` AS temp ON samples.sample_name=temp.sample_name WHERE samples.sample_id NOT IN (SELECT sample_id FROM \`~{dataset_name}.sample_load_status\` WHERE status='FINISHED')" > sample_map
+      "SELECT sample_id, samples.sample_name FROM `~{dataset_name}.~{table_name}` AS samples JOIN \`${TEMP_TABLE}\` AS temp ON samples.sample_name=temp.sample_name WHERE samples.sample_id NOT IN (SELECT sample_id FROM \`~{dataset_name}.sample_load_status\` WHERE status='FINISHED')" > sample_map
 
     cut -d, -f1 sample_map > gvs_ids
 
