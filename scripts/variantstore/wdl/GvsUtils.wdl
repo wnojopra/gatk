@@ -254,7 +254,7 @@ task BuildGATKJarAndCreateDataset {
 
   command <<<
     # Much of this could/should be put into a Docker image.
-    set -o errexit -o nounset -o pipefail
+    set -o errexit -o nounset -o pipefail -o xtrace
 
     # git and git-lfs
     apt-get -qq update
