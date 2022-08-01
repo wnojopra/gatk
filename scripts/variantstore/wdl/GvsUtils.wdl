@@ -268,7 +268,7 @@ task BuildGATKJarAndCreateDataset {
     # apt -qq install -y temurin-11-jdk
 
     # Corretto Java 11
-    apt-get -qq install wget apt-transport-https gnupg
+    apt-get -qq install wget apt-transport-https gnupg software-properties-common
     wget -O- https://apt.corretto.aws/corretto.key | apt-key add -
     add-apt-repository 'deb https://apt.corretto.aws stable main'
     apt-get -qq update
