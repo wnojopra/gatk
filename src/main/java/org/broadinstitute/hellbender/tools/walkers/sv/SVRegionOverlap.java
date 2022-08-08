@@ -24,8 +24,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Annotate records from a structural variant (SV) VCF with overlap metrics against one or more sets of intervals.
+ * Annotate records from a structural variant (SV) VCF with overlap metrics against one or more interval sets.
  *
+ * Note that -L/-XL arguments maintain normal behavior of filtering variants by location and will not be used for annotation.
  *
  * <h3>Inputs</h3>
  *
@@ -47,7 +48,8 @@ import java.util.stream.Collectors;
  *
  * <pre>
  *     gatk SVRegionOverlap \
- *       --region-file intervals.intervals_list \
+ *       --sequence-dictionary ref.dict \
+ *       --region-file my_regions.bed \
  *       --region-name MY_REGIONS \
  *       -V variants.vcf.gz \
  *       -O annotated.vcf.gz
