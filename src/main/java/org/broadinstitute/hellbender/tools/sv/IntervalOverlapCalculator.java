@@ -11,14 +11,13 @@ import java.util.*;
 public class IntervalOverlapCalculator {
 
     final SAMSequenceDictionary dictionary;
-    final SVIntervalTree tree;
+    final SVIntervalTree<Object> tree;
 
     public IntervalOverlapCalculator(final Collection<SVInterval> intervals, final SAMSequenceDictionary dictionary) {
         this.dictionary = dictionary;
-        tree = new SVIntervalTree();
+        tree = new SVIntervalTree<>();
         intervals.stream().forEach(interval -> tree.put(interval, null));
     }
-
 
     public static IntervalOverlapCalculator create(final GATKPath path,
                                                    final SAMSequenceDictionary dictionary,
@@ -68,7 +67,7 @@ public class IntervalOverlapCalculator {
     private long totalOverlap(final SVCallRecord record) {
         Utils.validate(record.isIntrachromosomal(), "Record must be intra-chromosomal");
         final SVInterval interval = new SVInterval(dictionary.getSequenceIndex(record.getContigA()), record.getPositionA(), record.getPositionB());
-        final Iterator<SVIntervalTree.Entry> iter = tree.overlappers(interval);
+        final Iterator<SVIntervalTree.Entry<Object>> iter = tree.overlappers(interval);
         long overlap = 0;
         while (iter.hasNext()) {
             overlap += interval.overlapLen(iter.next().getInterval());
