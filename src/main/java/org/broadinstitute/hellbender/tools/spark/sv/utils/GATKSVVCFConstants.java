@@ -144,6 +144,10 @@ public final class GATKSVVCFConstants {
     public static final String NEAREST_TSS = "PREDICTED_NEAREST_TSS";
     public static final String TSS_DUP = "PREDICTED_TSS_DUP";
 
+    // overlap annotations
+    public static final String NUM_END_OVERLAPS_INFO_BASE = "NUM_END_OVERLAPS_";
+    public static final String OVERLAP_FRACTION_INFO_BASE = "OVERLAP_FRAC_";
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }
