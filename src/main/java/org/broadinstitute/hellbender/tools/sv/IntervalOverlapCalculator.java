@@ -53,9 +53,10 @@ public class IntervalOverlapCalculator {
 
     public Double getOverlapFraction(final SVCallRecord record) {
         // Total overlap as fraction of variant length
-        if (record.getType() == StructuralVariantType.BND || record.getType() == StructuralVariantType.INS) {
-            // Undefined for point variants
-            return null;
+        if (record.getType() == StructuralVariantType.BND) {
+            return getEndpointOverlapCount(record) / 2.0;
+        } else if (record.getType() == StructuralVariantType.INS) {
+            return getEndpointOverlapCount(record) > 0 ? 1. : 0.;
         }
         final Integer length = record.getLength();
         if (length == null) {
