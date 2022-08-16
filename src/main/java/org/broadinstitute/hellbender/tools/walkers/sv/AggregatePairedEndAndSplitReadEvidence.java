@@ -489,8 +489,8 @@ public final class AggregatePairedEndAndSplitReadEvidence extends TwoPassVariant
             header.addMetaDataLine(line);
         }
         if (bafCollectionEnabled()) {
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DEL_ATTRIBUTE, 1, VCFHeaderLineType.Float, "B-allele frequency statistic for deletions"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DUP_ATTRIBUTE, 1, VCFHeaderLineType.Float, "B-allele frequency statistic for duplications"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DEL_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DUP_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Difference of non-carrier and carrier BAF medians"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));

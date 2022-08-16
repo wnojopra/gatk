@@ -140,7 +140,7 @@ public class BafEvidenceTester {
         }
         final double medianCarrier = median.evaluate(carrierRatios.stream().mapToDouble(Double::doubleValue).toArray());
         final double medianNull = median.evaluate(nullRatios.stream().mapToDouble(Double::doubleValue).toArray());
-        return medianCarrier - medianNull;
+        return medianNull - medianCarrier;
 
         /*
         if (nullRatios.size() <= 10 || totalInnerCount < 10) {
