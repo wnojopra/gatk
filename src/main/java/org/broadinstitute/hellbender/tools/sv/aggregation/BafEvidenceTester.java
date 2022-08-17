@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.tools.sv.aggregation;
 import com.google.common.collect.Sets;
 import htsjdk.variant.variantcontext.StructuralVariantType;
 import org.apache.commons.math3.distribution.BinomialDistribution;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.BafEvidence;
@@ -16,12 +15,16 @@ import java.util.stream.Collectors;
 
 public class BafEvidenceTester {
 
-    private final Median median;
-    private final NormalDistribution normalDistribution;
+    private static final Median MEDIAN = new Median();
 
-    public BafEvidenceTester() {
-        this.median = new Median();
-        this.normalDistribution = new NormalDistribution(0, 1);
+    private final int minSnpCarriers;
+    private final double pSnp;
+    private final double pMaxHomozygous;
+
+    public BafEvidenceTester(final int minSnpCarriers, final double pSnp, final double pMaxHomozygous) {
+        this.minSnpCarriers = minSnpCarriers;
+        this.pSnp = pSnp;
+        this.pMaxHomozygous = pMaxHomozygous;
     }
 
     public Double calculateLogLikelihood(final SVCallRecord record, final List<BafEvidence> evidence, final Set<String> excludedSamples, final int flankSize) {
@@ -82,7 +85,7 @@ public class BafEvidenceTester {
         while (iter.hasNext()) {
             final BafEvidence baf = iter.next();
             if (baf.getStart() != pos) {
-                if (buffer.size() >= 5) {
+                if (buffer.size() >= minSnpCarriers) {
                     frequencyFilteredEvidence.addAll(buffer);
                 }
                 buffer.clear();
@@ -90,7 +93,7 @@ public class BafEvidenceTester {
             }
             buffer.add(baf);
         }
-        if (buffer.size() >= 5) {
+        if (buffer.size() >= minSnpCarriers) {
             frequencyFilteredEvidence.addAll(buffer);
         }
 
@@ -102,8 +105,8 @@ public class BafEvidenceTester {
         if (carrierBaf.length == 0) {
             return null;
         }
-        final double meanNull = median.evaluate(nullBaf);
-        final double meanCarrier = median.evaluate(carrierBaf);
+        final double meanNull = MEDIAN.evaluate(nullBaf);
+        final double meanCarrier = MEDIAN.evaluate(carrierBaf);
         return meanNull - meanCarrier;
     }
 
@@ -111,20 +114,20 @@ public class BafEvidenceTester {
                                                   final Map<String, SampleStats> sampleStats,
                                                   final Set<String> carrierSamples,
                                                   final int flankSize) {
-        final double threshold = 0.001; //Math.min(50. / length, 0.0005);
+        //final double pSnp = 0.001; //Math.min(50. / length, 0.0005);
         //int totalInnerCount = 0;
         final List<Double> nullRatios = new ArrayList<>();
         final List<Double> carrierRatios = new ArrayList<>();
 
-        final BinomialDistribution binomialDistributionFlank = new BinomialDistribution(flankSize, threshold);
-        final BinomialDistribution binomialDistributionInner = new BinomialDistribution(length, threshold);
+        final BinomialDistribution binomialDistributionFlank = new BinomialDistribution(flankSize, pSnp);
+        final BinomialDistribution binomialDistributionInner = new BinomialDistribution(length, pSnp);
 
         for (final Map.Entry<String, SampleStats> entry : sampleStats.entrySet()) {
             final String sample = entry.getKey();
             final SampleStats stats = entry.getValue();
             final double pFlank = binomialDistributionFlank.cumulativeProbability(Math.min(stats.beforeHetCount, stats.afterHetCount));
             final double pInner = binomialDistributionInner.cumulativeProbability(stats.innerHetCount);
-            if (!(pInner < 0.05 && pFlank < 0.05)) {
+            if (!(pInner < pMaxHomozygous && pFlank < pMaxHomozygous)) {
                 stats.deletionRatio = Math.log(stats.innerHetCount + 1.);
                 if (carrierSamples.contains(sample)) {
                     carrierRatios.add(stats.deletionRatio);
@@ -138,8 +141,8 @@ public class BafEvidenceTester {
         if (carrierRatios.isEmpty() || nullRatios.isEmpty()) {
             return null;
         }
-        final double medianCarrier = median.evaluate(carrierRatios.stream().mapToDouble(Double::doubleValue).toArray());
-        final double medianNull = median.evaluate(nullRatios.stream().mapToDouble(Double::doubleValue).toArray());
+        final double medianCarrier = MEDIAN.evaluate(carrierRatios.stream().mapToDouble(Double::doubleValue).toArray());
+        final double medianNull = MEDIAN.evaluate(nullRatios.stream().mapToDouble(Double::doubleValue).toArray());
         return medianNull - medianCarrier;
 
         /*

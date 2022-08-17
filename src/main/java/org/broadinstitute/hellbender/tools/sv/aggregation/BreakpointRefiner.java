@@ -195,17 +195,9 @@ public class BreakpointRefiner {
         refinedAttr.put(GATKSVVCFConstants.END_SPLIT_CARRIER_SIGNAL_ATTRIBUTE, endCarrierSignal);
         refinedAttr.put(GATKSVVCFConstants.TOTAL_SPLIT_CARRIER_SIGNAL_ATTRIBUTE, totalCarrierSignal);
 
-        final int newStartPosition;
-        final int newEndPosition;
         if (record.getType() == StructuralVariantType.INS) {
-            // For insertions, keep track of split read positions but use average as a nominal start
-            newStartPosition = (int) (0.5 * (refinedStartPosition + refinedEndPosition));
-            newEndPosition = newStartPosition;
             refinedAttr.put(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE, refinedStartSite.getPosition());
             refinedAttr.put(GATKSVVCFConstants.END_SPLIT_POSITION_ATTRIBUTE, refinedEndSite.getPosition());
-        } else {
-            newStartPosition = refinedStartPosition;
-            newEndPosition = refinedEndPosition;
         }
 
         final List<Genotype> genotypes = record.getGenotypes();
@@ -229,8 +221,8 @@ public class BreakpointRefiner {
         }
 
         // Create new record
-        return new SVCallRecord(record.getId(), record.getContigA(), newStartPosition,
-                record.getStrandA(), record.getContigB(), newEndPosition, record.getStrandB(), record.getType(),
+        return new SVCallRecord(record.getId(), record.getContigA(), record.getPositionA(),
+                record.getStrandA(), record.getContigB(), record.getPositionB(), record.getStrandB(), record.getType(),
                 length, record.getAlgorithms(), record.getAlleles(), newGenotypes, refinedAttr, dictionary);
     }
 

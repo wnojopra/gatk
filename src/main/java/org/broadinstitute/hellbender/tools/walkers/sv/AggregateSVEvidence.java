@@ -76,7 +76,7 @@ import java.util.stream.Collectors;
 )
 @ExperimentalFeature
 @DocumentedFeature
-public final class AggregatePairedEndAndSplitReadEvidence extends TwoPassVariantWalker {
+public final class AggregateSVEvidence extends TwoPassVariantWalker {
     public static final String SPLIT_READ_LONG_NAME = "split-reads-file";
     public static final String DISCORDANT_PAIRS_LONG_NAME = "discordant-pairs-file";
     public static final String BAF_LONG_NAME = "baf-file";
@@ -88,6 +88,9 @@ public final class AggregatePairedEndAndSplitReadEvidence extends TwoPassVariant
     public static final String BAF_MIN_SIZE_LONG_NAME = "baf-min-size";
     public static final String BAF_MAX_SIZE_LONG_NAME = "baf-max-size";
     public static final String BAF_PADDING_FRACTION_LONG_NAME = "baf-padding-fraction";
+    public static final String MIN_SNP_CARRIERS_LONG_NAME = "min-snp-carriers";
+    public static final String P_SNP_LONG_NAME = "p-snp";
+    public static final String P_MAX_HOMOZYGOUS_LONG_NAME = "p-max-homozygous";
     public static final String X_CHROMOSOME_LONG_NAME = "x-chromosome-name";
     public static final String Y_CHROMOSOME_LONG_NAME = "y-chromosome-name";
 
@@ -187,6 +190,34 @@ public final class AggregatePairedEndAndSplitReadEvidence extends TwoPassVariant
             optional = true
     )
     private double bafPaddingFraction = 1.0;
+
+    @Argument(
+            doc = "Minimum number of SNP carriers, used for filtering loci during duplication BAF assessment.",
+            fullName = MIN_SNP_CARRIERS_LONG_NAME,
+            minValue = 0,
+            optional = true
+    )
+    private int minSnpCarriers = 5;
+
+    @Argument(
+            doc = "Baseline expected SNPs per locus, used for filtering deletions in likely regions of homozygosity " +
+                    "during BAF assessment.",
+            fullName = P_SNP_LONG_NAME,
+            minValue = 0.,
+            maxValue = 1.,
+            optional = true
+    )
+    private double pSnp = 0.001;
+
+    @Argument(
+            doc = "Significance threshold for binomial test on region homozygosity, used for filtering deletions in " +
+                    "likely regions of homozygosity during BAF assessment.",
+            fullName = P_MAX_HOMOZYGOUS_LONG_NAME,
+            minValue = 0.,
+            maxValue = 1.,
+            optional = true
+    )
+    private double pMaxHomozygous = 0.05;
 
     /**
      * Expected format is tab-delimited and contains a header with the first column SAMPLE and remaining columns
@@ -304,7 +335,7 @@ public final class AggregatePairedEndAndSplitReadEvidence extends TwoPassVariant
     private void initializeBAFCollection() {
         initializeBAFEvidenceDataSource();
         bafCollector = new BafEvidenceAggregator(bafSource, dictionary, bafPaddingFraction);
-        bafEvidenceTester = new BafEvidenceTester();
+        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, pSnp, pMaxHomozygous);
     }
 
     private void initializeDiscordantPairDataSource() {

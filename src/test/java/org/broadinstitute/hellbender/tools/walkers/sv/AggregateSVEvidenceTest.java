@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class AggregatePairedEndAndSplitReadEvidenceTest extends GatkToolIntegrationTest {
+public class AggregateSVEvidenceTest extends GatkToolIntegrationTest {
 
     public static final String TOOL_TEST_DIR = toolsTestDir + "walkers/sv/AggregatePairedEndAndSplitReadEvidence";
 
@@ -35,15 +35,15 @@ public class AggregatePairedEndAndSplitReadEvidenceTest extends GatkToolIntegrat
                 .addVCF(vcfFile)
                 .addOutput(outputFile)
                 .addReference(hg38Reference)
-                .add(AggregatePairedEndAndSplitReadEvidence.DISCORDANT_PAIRS_LONG_NAME, peFile)
-                .add(AggregatePairedEndAndSplitReadEvidence.SPLIT_READ_LONG_NAME, srFile)
-                .add(AggregatePairedEndAndSplitReadEvidence.SAMPLE_COVERAGE_LONG_NAME, coverageFile)
-                .add(AggregatePairedEndAndSplitReadEvidence.PE_INNER_WINDOW_LONG_NAME, PE_INNER_WINDOW)
-                .add(AggregatePairedEndAndSplitReadEvidence.PE_OUTER_WINDOW_LONG_NAME, PE_OUTER_WINDOW)
-                .add(AggregatePairedEndAndSplitReadEvidence.SR_WINDOW_LONG_NAME, SR_WINDOW)
-                .add(AggregatePairedEndAndSplitReadEvidence.SR_INSERTION_CROSSOVER_LONG_NAME, SR_CROSSOVER);
+                .add(AggregateSVEvidence.DISCORDANT_PAIRS_LONG_NAME, peFile)
+                .add(AggregateSVEvidence.SPLIT_READ_LONG_NAME, srFile)
+                .add(AggregateSVEvidence.SAMPLE_COVERAGE_LONG_NAME, coverageFile)
+                .add(AggregateSVEvidence.PE_INNER_WINDOW_LONG_NAME, PE_INNER_WINDOW)
+                .add(AggregateSVEvidence.PE_OUTER_WINDOW_LONG_NAME, PE_OUTER_WINDOW)
+                .add(AggregateSVEvidence.SR_WINDOW_LONG_NAME, SR_WINDOW)
+                .add(AggregateSVEvidence.SR_INSERTION_CROSSOVER_LONG_NAME, SR_CROSSOVER);
 
-        runCommandLine(args, AggregatePairedEndAndSplitReadEvidence.class.getSimpleName());
+        runCommandLine(args, AggregateSVEvidence.class.getSimpleName());
 
         final File expectedFile = new File(TOOL_TEST_DIR, "test_hg38.expected.vcf.gz");
         final Pair<VCFHeader, List<VariantContext>> expected = VariantContextTestUtils.readEntireVCFIntoMemory(expectedFile.getPath());
