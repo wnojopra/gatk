@@ -279,6 +279,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
 
     @Override
     public void onTraversalStart() {
+        progressMeter.setRecordsBetweenTimeChecks(100);
         dictionary = getBestAvailableSequenceDictionary();
         if (dictionary == null) {
             throw new UserException("Reference sequence dictionary required");
@@ -354,7 +355,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
                 "splitReadsFile",
                 SPLIT_READ_QUERY_LOOKAHEAD,
                 SplitReadEvidence.class,
-                cloudPrefetchBuffer,
+                0,  // end positions can skip around and cause major prefetching slowdowns
                 cloudIndexPrefetchBuffer);
     }
 
@@ -473,15 +474,15 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         final Set<String> excludedSamples = getSamplesToExcludeForStatsBySex(record);
         flushOutputBuffer(record.getPositionAInterval());
         if (bafCollectionEnabled() && useBafEvidence(record)) {
-            final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
-            final Double result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
-            record = bafEvidenceTester.applyToRecord(record, result);
+            //final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
+            //final Double result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
+            //record = bafEvidenceTester.applyToRecord(record, result);
         }
         DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairResult = null;
         if (discordantPairCollectionEnabled() && useDiscordantPairEvidence(record)) {
-            final List<DiscordantPairEvidence> discordantPairEvidence = discordantPairCollector.collectEvidence(record);
-            discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, excludedSamples);
-            record = discordantPairEvidenceTester.applyToRecord(record, discordantPairResult);
+            //final List<DiscordantPairEvidence> discordantPairEvidence = discordantPairCollector.collectEvidence(record);
+            //discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, excludedSamples);
+            //record = discordantPairEvidenceTester.applyToRecord(record, discordantPairResult);
         }
         if (splitReadCollectionEnabled() && useSplitReadEvidence(record)) {
             final List<SplitReadEvidence> startSplitReadEvidence = startSplitCollector.collectEvidence(record);

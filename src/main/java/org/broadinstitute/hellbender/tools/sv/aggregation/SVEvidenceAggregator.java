@@ -3,6 +3,8 @@ package org.broadinstitute.hellbender.tools.sv.aggregation;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.util.OverlapDetector;
 import htsjdk.tribble.Feature;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.engine.FeatureDataSource;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecord;
 import org.broadinstitute.hellbender.utils.IntervalMergingRule;
@@ -14,6 +16,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class SVEvidenceAggregator<T extends Feature> {
+
+    private static final Logger logger = LogManager.getLogger(SVEvidenceAggregator.class);
 
     private final FeatureDataSource<T> source;
     private SimpleInterval cacheInterval;

@@ -169,12 +169,19 @@ public class BreakpointRefiner {
                                       final RefineResult result) {
         Utils.nonNull(record);
         Utils.nonNull(result);
-        final SplitReadSite refinedStartSite = result.getStart();
-        final SplitReadSite refinedEndSite = result.getEnd();
+        final SplitReadSite refinedStartSite;
+        final SplitReadSite refinedEndSite;
+        if (record.isIntrachromosomal() && record.getStrandA() == record.getStrandB() &&
+                result.getEnd().getPosition() < result.getStart().getPosition()) {
+            // Swap start/end if strands match and positions are out of order e.g. for inversions
+            refinedStartSite = result.getEnd();
+            refinedEndSite = result.getStart();
+        } else {
+            refinedStartSite = result.getStart();
+            refinedEndSite = result.getEnd();
+        }
         final EvidenceStatUtils.PoissonTestResult bothsideResult = result.getBothsidesResult();
 
-        final int refinedStartPosition = refinedStartSite.getPosition();
-        final int refinedEndPosition = refinedEndSite.getPosition();
         final Integer length = record.getType().equals(StructuralVariantType.INS) ? record.getLength() : null;
 
         final Integer startQuality = refinedStartSite.getP() == null || Double.isNaN(refinedStartSite.getP()) ? null : EvidenceStatUtils.probToQual(refinedStartSite.getP(), (byte) 99);
@@ -194,11 +201,8 @@ public class BreakpointRefiner {
         refinedAttr.put(GATKSVVCFConstants.START_SPLIT_CARRIER_SIGNAL_ATTRIBUTE, startCarrierSignal);
         refinedAttr.put(GATKSVVCFConstants.END_SPLIT_CARRIER_SIGNAL_ATTRIBUTE, endCarrierSignal);
         refinedAttr.put(GATKSVVCFConstants.TOTAL_SPLIT_CARRIER_SIGNAL_ATTRIBUTE, totalCarrierSignal);
-
-        if (record.getType() == StructuralVariantType.INS) {
-            refinedAttr.put(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE, refinedStartSite.getPosition());
-            refinedAttr.put(GATKSVVCFConstants.END_SPLIT_POSITION_ATTRIBUTE, refinedEndSite.getPosition());
-        }
+        refinedAttr.put(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE, refinedStartSite.getPosition());
+        refinedAttr.put(GATKSVVCFConstants.END_SPLIT_POSITION_ATTRIBUTE, refinedEndSite.getPosition());
 
         final List<Genotype> genotypes = record.getGenotypes();
         final GenotypesContext newGenotypes = GenotypesContext.create(genotypes.size());
