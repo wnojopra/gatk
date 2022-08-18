@@ -28,7 +28,17 @@ public class SplitReadEvidenceAggregator extends SVEvidenceAggregator<SplitReadE
 
     @Override
     public SimpleInterval getEvidenceQueryInterval(final SVCallRecord call) {
-        final SimpleInterval result = (isStart ? call.getPositionAInterval() : call.getPositionBInterval()).expandWithinContig(window, dictionary);
+        return isStart ? getStartEvidenceQueryInterval(call, window, dictionary) : getEndEvidenceQueryInterval(call, window, dictionary);
+    }
+
+    public static SimpleInterval getStartEvidenceQueryInterval(final SVCallRecord call, final int window, final SAMSequenceDictionary dictionary) {
+        final SimpleInterval result = call.getPositionAInterval().expandWithinContig(window, dictionary);
+        Utils.nonNull(result, "Error generating padded interval for variant " + call.getId() + "; check that its coordinates are valid");
+        return result;
+    }
+
+    public static SimpleInterval getEndEvidenceQueryInterval(final SVCallRecord call, final int window, final SAMSequenceDictionary dictionary) {
+        final SimpleInterval result = call.getPositionBInterval().expandWithinContig(window, dictionary);
         Utils.nonNull(result, "Error generating padded interval for variant " + call.getId() + "; check that its coordinates are valid");
         return result;
     }

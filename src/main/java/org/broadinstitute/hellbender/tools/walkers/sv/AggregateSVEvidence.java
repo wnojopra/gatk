@@ -2,7 +2,8 @@ package org.broadinstitute.hellbender.tools.walkers.sv;
 
 import com.google.common.collect.Sets;
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.variant.variantcontext.*;
+import htsjdk.variant.variantcontext.StructuralVariantType;
+import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import htsjdk.variant.vcf.*;
 import org.apache.commons.io.IOUtils;
@@ -21,6 +22,7 @@ import org.broadinstitute.hellbender.tools.sv.cluster.PloidyTable;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.cloud.LocalizedFeatureSubset;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 
 import java.io.IOException;
@@ -245,6 +247,13 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     )
     private String yChromosomeName = "chrY";
 
+    @Argument(
+            doc = "Output compression level",
+            fullName = PrintSVEvidence.COMPRESSION_LEVEL_NAME,
+            minValue = 0, maxValue = 9, optional = true
+    )
+    private int compressionLevel = 4;
+
     private SAMSequenceDictionary dictionary;
     private VariantContextWriter writer;
 
@@ -268,8 +277,11 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     private Set<String> femaleSamples;
 
     private Collection<SimpleInterval> discordantPairIntervals;
-    private Collection<SimpleInterval> splitReadIntervals;
+    private Collection<SimpleInterval> startSplitReadIntervals;
+    private Collection<SimpleInterval> endSplitReadIntervals;
     private Collection<SimpleInterval> bafIntervals;
+
+    private LocalizedFeatureSubset<SplitReadEvidence> localizedEndSplitReads;
 
     private Collection<VariantContext> outputBuffer;
 
@@ -299,7 +311,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             initializeBAFCollection();
         }
         discordantPairIntervals = new ArrayList<>();
-        splitReadIntervals = new ArrayList<>();
+        startSplitReadIntervals = new ArrayList<>();
+        endSplitReadIntervals = new ArrayList<>();
         bafIntervals = new ArrayList<>();
         outputBuffer = new ArrayList<>();
         writer = createVCFWriter(Paths.get(outputFile));
@@ -328,8 +341,6 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
 
     private void initializeSplitReadCollection() {
         initializeSplitReadEvidenceDataSource();
-        startSplitCollector = new SplitReadEvidenceAggregator(splitReadSource, dictionary, splitReadWindow, true);
-        endSplitCollector = new SplitReadEvidenceAggregator(splitReadSource, dictionary, splitReadWindow, false);
         breakpointRefiner = new BreakpointRefiner(sampleCoverageMap, splitReadInsertionCrossover, dictionary);
     }
 
@@ -419,7 +430,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             discordantPairIntervals.add(discordantPairCollector.getEvidenceQueryInterval(call));
         }
         if (splitReadCollectionEnabled() && useSplitReadEvidence(call)) {
-            splitReadIntervals.add(startSplitCollector.getEvidenceQueryInterval(call));
+            startSplitReadIntervals.add(SplitReadEvidenceAggregator.getStartEvidenceQueryInterval(call, splitReadWindow, dictionary));
+            endSplitReadIntervals.add(SplitReadEvidenceAggregator.getEndEvidenceQueryInterval(call, splitReadWindow, dictionary));
         }
         if (bafCollectionEnabled() && useBafEvidence(call)) {
             bafIntervals.add(bafCollector.getEvidenceQueryInterval(call));
@@ -432,7 +444,14 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             discordantPairCollector.setCacheIntervals(discordantPairIntervals);
         }
         if (splitReadCollectionEnabled()) {
-            startSplitCollector.setCacheIntervals(splitReadIntervals);
+            startSplitCollector = new SplitReadEvidenceAggregator(splitReadSource, dictionary, splitReadWindow, true);
+            startSplitCollector.setCacheIntervals(startSplitReadIntervals);
+            logger.info("Localizing split read evidence at END loci...");
+            localizedEndSplitReads = new LocalizedFeatureSubset<>(splitReadsFile, endSplitReadIntervals, "endSplitReads", 0,
+                    cloudPrefetchBuffer, cloudIndexPrefetchBuffer, new ArrayList<>(samples), compressionLevel, dictionary);
+            logger.info("Finished localization of " + localizedEndSplitReads.getRecordCount() + " feature records");
+            // Does not use interval caching to avoid thrashing due distant ENDs
+            endSplitCollector = new SplitReadEvidenceAggregator(localizedEndSplitReads.getLocalizedDataSource(), dictionary, splitReadWindow, false);
         }
         if (bafCollectionEnabled()) {
             bafCollector.setCacheIntervals(bafIntervals);
@@ -474,15 +493,15 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         final Set<String> excludedSamples = getSamplesToExcludeForStatsBySex(record);
         flushOutputBuffer(record.getPositionAInterval());
         if (bafCollectionEnabled() && useBafEvidence(record)) {
-            //final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
-            //final Double result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
-            //record = bafEvidenceTester.applyToRecord(record, result);
+            final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
+            final Double result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
+            record = bafEvidenceTester.applyToRecord(record, result);
         }
         DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairResult = null;
         if (discordantPairCollectionEnabled() && useDiscordantPairEvidence(record)) {
-            //final List<DiscordantPairEvidence> discordantPairEvidence = discordantPairCollector.collectEvidence(record);
-            //discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, excludedSamples);
-            //record = discordantPairEvidenceTester.applyToRecord(record, discordantPairResult);
+            final List<DiscordantPairEvidence> discordantPairEvidence = discordantPairCollector.collectEvidence(record);
+            discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, excludedSamples);
+            record = discordantPairEvidenceTester.applyToRecord(record, discordantPairResult);
         }
         if (splitReadCollectionEnabled() && useSplitReadEvidence(record)) {
             final List<SplitReadEvidence> startSplitReadEvidence = startSplitCollector.collectEvidence(record);
