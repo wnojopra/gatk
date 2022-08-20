@@ -91,6 +91,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     public static final String BAF_MAX_SIZE_LONG_NAME = "baf-max-size";
     public static final String BAF_PADDING_FRACTION_LONG_NAME = "baf-padding-fraction";
     public static final String MIN_SNP_CARRIERS_LONG_NAME = "min-snp-carriers";
+    public static final String MIN_BAF_COUNT_LONG_NAME = "min-baf-count";
     public static final String P_SNP_LONG_NAME = "p-snp";
     public static final String P_MAX_HOMOZYGOUS_LONG_NAME = "p-max-homozygous";
     public static final String X_CHROMOSOME_LONG_NAME = "x-chromosome-name";
@@ -200,6 +201,14 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             optional = true
     )
     private int minSnpCarriers = 5;
+
+    @Argument(
+            doc = "Minimum number of BAF values required in carrier and non-carrier groups.",
+            fullName = MIN_BAF_COUNT_LONG_NAME,
+            minValue = 1,
+            optional = true
+    )
+    private int minBafCount = 30;
 
     @Argument(
             doc = "Baseline expected SNPs per locus, used for filtering deletions in likely regions of homozygosity " +
@@ -347,7 +356,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     private void initializeBAFCollection() {
         initializeBAFEvidenceDataSource();
         bafCollector = new BafEvidenceAggregator(bafSource, dictionary, bafPaddingFraction);
-        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, pSnp, pMaxHomozygous);
+        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, minBafCount, pSnp, pMaxHomozygous);
     }
 
     private void initializeDiscordantPairDataSource() {

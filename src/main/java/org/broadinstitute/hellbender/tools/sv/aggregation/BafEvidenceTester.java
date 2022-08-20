@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.sv.aggregation;
 import com.google.common.collect.Sets;
 import htsjdk.variant.variantcontext.StructuralVariantType;
 import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.BafEvidence;
@@ -16,13 +17,20 @@ import java.util.stream.Collectors;
 public class BafEvidenceTester {
 
     private static final Median MEDIAN = new Median();
+    private static final StandardDeviation STDEV = new StandardDeviation();
 
     private final int minSnpCarriers;
+    private final int minBafCount;
     private final double pSnp;
     private final double pMaxHomozygous;
 
-    public BafEvidenceTester(final int minSnpCarriers, final double pSnp, final double pMaxHomozygous) {
+    public BafEvidenceTester(final int minSnpCarriers, final int minBafCount, final double pSnp, final double pMaxHomozygous) {
+        Utils.validateArg(minSnpCarriers > 0, "minSnpCarriers must be positive");
+        Utils.validateArg(minBafCount > 0, "minBafCount must be positive");
+        Utils.validateArg(pSnp > 0 && pSnp < 1, "pSnp must be a probability on (0, 1)");
+        Utils.validateArg(pMaxHomozygous > 0 && pMaxHomozygous < 1, "pMaxHomozygous must be a probability on (0, 1)");
         this.minSnpCarriers = minSnpCarriers;
+        this.minBafCount = minBafCount;
         this.pSnp = pSnp;
         this.pMaxHomozygous = pMaxHomozygous;
     }
@@ -77,7 +85,6 @@ public class BafEvidenceTester {
     }
 
     private Double calculateDuplicationTestStatistic(final List<BafEvidence> evidence, final Set<String> carrierSamples) {
-
         final List<BafEvidence> frequencyFilteredEvidence = new ArrayList<>();
         final Iterator<BafEvidence> iter = evidence.iterator();
         final List<BafEvidence> buffer = new ArrayList<>();
@@ -97,17 +104,20 @@ public class BafEvidenceTester {
             frequencyFilteredEvidence.addAll(buffer);
         }
 
-        final double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1.0 - d)).toArray();
-        if (nullBaf.length == 0) {
-            return null;
-        }
         final double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1.0 - d)).toArray();
-        if (carrierBaf.length == 0) {
+        if (carrierBaf.length < minBafCount) {
             return null;
         }
-        final double meanNull = MEDIAN.evaluate(nullBaf);
-        final double meanCarrier = MEDIAN.evaluate(carrierBaf);
-        return meanNull - meanCarrier;
+        final double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1.0 - d)).toArray();
+        if (nullBaf.length < minBafCount) {
+            return null;
+        }
+
+        final double nullMedian = MEDIAN.evaluate(nullBaf);
+        final double carrierMedian = MEDIAN.evaluate(carrierBaf);
+        final double nullStd = STDEV.evaluate(nullBaf);
+        final double carrierStd = STDEV.evaluate(carrierBaf);
+        return (nullMedian - carrierMedian) / Math.sqrt(nullStd * nullStd + carrierStd * carrierStd);
     }
 
     private Double calculateDeletionTestStatistic(final int length,
