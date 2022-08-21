@@ -227,13 +227,18 @@ public class Mutect3DatasetEngine implements AutoCloseable {
             tumorAltReads.forEach(r -> printWriter.println(integerString(r)));
             //normalRefReads.forEach(r -> printWriter.print(numberString(r)));
             //normalAltReads.forEach(r -> printWriter.print(numberString(r)));
-            printWriter.printf("%d %d %d %d%n", tumorDepth, tumorADs[n+1], normalDepth, normalADs[n+1]);  // pre-downsampling counts for normal artifact model
+            printWriter.printf("%d %d %d %d%n", tumorDepth, tumorADs[n+1], normalDepth, normalADs[n+1]);  // pre-downsampling counts
             // this is approximately the likelihood that these particular reads are alt given sequencing error, excluding
             // the depth C N_alt combinatorial factor that is common to all likelihoods in M3
-            // basicaly, it's the TLOD with a correction for the marginalized flat prior from M2
+            // basically, it's the TLOD with a correction for the marginalized flat prior from M2
             final double tlod = vc.getAttributeAsDoubleList("TLOD", 0).get(n);
             final double seqErrorLogLikelihood = -MathUtils.log10ToLog(tlod) - Math.log(tumorDepth + 1);
-            printWriter.printf("%.3f%n", seqErrorLogLikelihood);  // pre-downsampling counts for normal artifact model
+            printWriter.printf("%.3f%n", seqErrorLogLikelihood);
+
+            // and do the same for the normal
+            final double nalod = vc.getAttributeAsDoubleList("NALOD", 0).get(n);
+            final double normalSeqErrorLogLikelihood = -MathUtils.log10ToLog(nalod) - Math.log(normalDepth + 1);
+            printWriter.printf("%.3f%n", normalSeqErrorLogLikelihood);
         }
     }
 
