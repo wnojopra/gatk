@@ -236,7 +236,7 @@ public class Mutect3DatasetEngine implements AutoCloseable {
             printWriter.printf("%.3f%n", seqErrorLogLikelihood);
 
             // and do the same for the normal
-            final double nalod = vc.getAttributeAsDoubleList("NALOD", 0).get(n);
+            final double nalod = normalSamples.isEmpty() ? 0 : vc.getAttributeAsDoubleList("NALOD", 0).get(n);
             final double normalSeqErrorLogLikelihood = -MathUtils.log10ToLog(nalod) - Math.log(normalDepth + 1);
             printWriter.printf("%.3f%n", normalSeqErrorLogLikelihood);
         }
