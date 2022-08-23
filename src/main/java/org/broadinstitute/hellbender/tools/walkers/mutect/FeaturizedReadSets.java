@@ -105,6 +105,13 @@ public class FeaturizedReadSets {
 
         // mismatches versus best haplotype
         final Haplotype haplotype = bestHaplotypes.get(read);
+        // DEBUD
+        Utils.validate(bestHaplotypes.containsKey(read), "best haplotypes don't have the read");
+        Utils.nonNull(read, "read is null");
+
+
+
+        // END DEBUG
         final SmithWatermanAlignment readToHaplotypeAlignment = aligner.align(haplotype.getBases(), read.getBases(), SmithWatermanAlignmentConstants.ALIGNMENT_TO_BEST_HAPLOTYPE_SW_PARAMETERS, SWOverhangStrategy.SOFTCLIP);
         final GATKRead copy = read.copy();
         copy.setCigar(readToHaplotypeAlignment.getCigar());
