@@ -46,9 +46,6 @@ public class Mutect3DatasetEngine implements AutoCloseable {
         ARTIFACT, VARIANT, UNLABELED, IGNORE
     }
 
-    // number of features for each vectorized read
-    private static final int FEATURES_PER_READ = FeaturizedReadSets.FEATURES_PER_READ;
-
     // number of additional variant features for assembly complexity, reference context
     private static final int NUM_EXTRA_FEATURES = 9;
 
@@ -108,7 +105,8 @@ public class Mutect3DatasetEngine implements AutoCloseable {
     public void addData(final ReferenceContext ref, final VariantContext vc, Optional<List<VariantContext>> truthVCs,
                         final AlleleLikelihoods<GATKRead, Allele> likelihoods,
                         final AlleleLikelihoods<Fragment, Haplotype> logFragmentLikelihoods,
-                        final AlleleLikelihoods<Fragment, Allele> logFragmentAlleleLikelihoods) {
+                        final AlleleLikelihoods<Fragment, Allele> logFragmentAlleleLikelihoods,
+                        final M2ArgumentCollection.Mutect3DatasetMode mutect3DatasetMode) {
         final String refBases = ReferenceBases.annotate(ref, vc);
         final String refAllele = vc.getReference().getBaseString();
         final String contig = vc.getContig();
@@ -194,8 +192,10 @@ public class Mutect3DatasetEngine implements AutoCloseable {
 
         // TODO: for now we don't really need normal reads
         // note that the following use the VC's allele order, not necessarily the likelihoods' allele order
-        final List<List<List<Integer>>> normalReadVectorsByAllele =  FeaturizedReadSets.getReadVectors(vc, normalSamples, likelihoods, logFragmentLikelihoods, maxRefCount, maxAltCount);
-        final List<List<List<Integer>>> tumorReadVectorsByAllele =  FeaturizedReadSets.getReadVectors(vc, tumorSamples, likelihoods, logFragmentLikelihoods, maxRefCount, maxAltCount, altDownsampleMap);
+        final List<List<List<Integer>>> normalReadVectorsByAllele =  FeaturizedReadSets.getReadVectors(vc, normalSamples,
+                likelihoods, logFragmentLikelihoods, maxRefCount, maxAltCount, mutect3DatasetMode);
+        final List<List<List<Integer>>> tumorReadVectorsByAllele =  FeaturizedReadSets.getReadVectors(vc, tumorSamples,
+                likelihoods, logFragmentLikelihoods, maxRefCount, maxAltCount, altDownsampleMap, mutect3DatasetMode);
 
         // ref and alt reads have already been downsampled by the read featurizer
         final List<List<Integer>> tumorRefReads = tumorReadVectorsByAllele.get(0);
