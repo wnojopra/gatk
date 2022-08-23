@@ -94,7 +94,6 @@ workflow GvsImportGenomes {
         dataset_name = dataset_name,
         project_id = project_id,
         skip_loading_vqsr_fields = skip_loading_vqsr_fields,
-        drop_state = "FORTY",
         drop_state_includes_greater_than = false,
         input_vcf_indexes = read_lines(CreateFOFNs.vcf_batch_vcf_index_fofns[i]),
         input_vcfs = read_lines(CreateFOFNs.vcf_batch_vcf_fofns[i]),
