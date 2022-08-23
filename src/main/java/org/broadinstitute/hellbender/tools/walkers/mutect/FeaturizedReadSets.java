@@ -1,15 +1,14 @@
-package org.broadinstitute.hellbender.tools.walkers.annotator;
+package org.broadinstitute.hellbender.tools.walkers.mutect;
 
 
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
-import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.gatk.nativebindings.smithwaterman.SWOverhangStrategy;
-import org.broadinstitute.hellbender.tools.walkers.mutect.M2ArgumentCollection;
+import org.broadinstitute.hellbender.tools.walkers.annotator.BaseQuality;
+import org.broadinstitute.hellbender.tools.walkers.annotator.ReadPosition;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.AlleleLikelihoods;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
-import org.broadinstitute.hellbender.utils.help.HelpConstants;
 import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
 import org.broadinstitute.hellbender.utils.read.Fragment;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -26,8 +25,6 @@ import java.util.stream.Collectors;
  * [1,2] and [3,4] and allele 2 has featurized reads [5,6] and [7,8], the annotation is
  * 1,2,3,4|5,6,7,8
  */
-@DocumentedFeature(groupName= HelpConstants.DOC_CAT_ANNOTATORS, groupSummary=HelpConstants.DOC_CAT_ANNOTATORS_SUMMARY,
-        summary="Featurized read sets for Mutect3 training data")
 public class FeaturizedReadSets {
     public static final int DEFAULT_BASE_QUALITY = 25;
 
