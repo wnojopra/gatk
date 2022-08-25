@@ -3,9 +3,12 @@ package org.broadinstitute.hellbender.tools.walkers.mutect;
 
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.broadinstitute.gatk.nativebindings.smithwaterman.SWOverhangStrategy;
 import org.broadinstitute.hellbender.tools.walkers.annotator.BaseQuality;
 import org.broadinstitute.hellbender.tools.walkers.annotator.ReadPosition;
+import org.broadinstitute.hellbender.tools.walkers.variantutils.FamilyLikelihoods;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.genotyper.AlleleLikelihoods;
 import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
@@ -26,6 +29,8 @@ import java.util.stream.Collectors;
  * 1,2,3,4|5,6,7,8
  */
 public class FeaturizedReadSets {
+    private static final Logger logger = LogManager.getLogger(FeaturizedReadSets.class);
+
     public static final int DEFAULT_BASE_QUALITY = 25;
 
     private static final SmithWatermanAligner aligner = SmithWatermanAligner.getAligner(SmithWatermanAligner.Implementation.JAVA);
@@ -106,20 +111,30 @@ public class FeaturizedReadSets {
         // mismatches versus best haplotype
         final Haplotype haplotype = bestHaplotypes.get(read);
         // DEBUD
-        Utils.validate(bestHaplotypes.containsKey(read), "best haplotypes don't have the read");
-        Utils.nonNull(read, "read is null");
-
-
-
+        //Utils.validate(bestHaplotypes.containsKey(read), "best haplotypes don't have the read");
+        //Utils.nonNull(read, "read is null");
+        //haplotype.getBases();
+        //read.getBases();
+        //Utils.nonNull(aligner);
         // END DEBUG
-        final SmithWatermanAlignment readToHaplotypeAlignment = aligner.align(haplotype.getBases(), read.getBases(), SmithWatermanAlignmentConstants.ALIGNMENT_TO_BEST_HAPLOTYPE_SW_PARAMETERS, SWOverhangStrategy.SOFTCLIP);
-        final GATKRead copy = read.copy();
-        copy.setCigar(readToHaplotypeAlignment.getCigar());
-        final int mismatchCount = AlignmentUtils.getMismatchCount(copy, haplotype.getBases(), readToHaplotypeAlignment.getAlignmentOffset()).numMismatches;
-        result.add(mismatchCount);
 
-        final long indelsVsBestHaplotype = readToHaplotypeAlignment.getCigar().getCigarElements().stream().filter(el -> el.getOperator().isIndel()).count();
-        result.add((int) indelsVsBestHaplotype);
+        // TODO: fix this
+        // I have no idea why this edge case occurs in Ultima data
+        if (mutect3DatasetMode == M2ArgumentCollection.Mutect3DatasetMode.ULTIMA && !bestHaplotypes.containsKey(read)) {
+            logger.warn(String.format("Best haplotypes don't contain read %s at position %s:%d.", read.getName(),
+                    vc.getContig(), vc.getStart()));
+            result.add(3);
+            result.add(2);
+        } else {
+            final SmithWatermanAlignment readToHaplotypeAlignment = aligner.align(haplotype.getBases(), read.getBases(), SmithWatermanAlignmentConstants.ALIGNMENT_TO_BEST_HAPLOTYPE_SW_PARAMETERS, SWOverhangStrategy.SOFTCLIP);
+            final GATKRead copy = read.copy();
+            copy.setCigar(readToHaplotypeAlignment.getCigar());
+            final int mismatchCount = AlignmentUtils.getMismatchCount(copy, haplotype.getBases(), readToHaplotypeAlignment.getAlignmentOffset()).numMismatches;
+            result.add(mismatchCount);
+
+            final long indelsVsBestHaplotype = readToHaplotypeAlignment.getCigar().getCigarElements().stream().filter(el -> el.getOperator().isIndel()).count();
+            result.add((int) indelsVsBestHaplotype);
+        }
         Utils.validate(result.size() == mutect3DatasetMode.getNumReadFeatures(), "Wrong number of features");
 
         return result;
