@@ -503,7 +503,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         flushOutputBuffer(record.getPositionAInterval());
         if (bafCollectionEnabled() && useBafEvidence(record)) {
             final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
-            final Double result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
+            final BafEvidenceTester.BafResult result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
             record = bafEvidenceTester.applyToRecord(record, result);
         }
         DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairResult = null;
@@ -549,8 +549,9 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             header.addMetaDataLine(line);
         }
         if (bafCollectionEnabled()) {
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DEL_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_STAT_DUP_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Difference of non-carrier and carrier BAF medians"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF KS test phred-scaled quality"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF KS test statistic"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));
