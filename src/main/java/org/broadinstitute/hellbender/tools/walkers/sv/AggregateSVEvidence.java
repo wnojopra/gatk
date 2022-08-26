@@ -549,7 +549,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             header.addMetaDataLine(line);
         }
         if (bafCollectionEnabled()) {
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF KS test phred-scaled quality"));
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF KS test statistic"));
         }

@@ -79,7 +79,7 @@ public class BafEvidenceTester {
         }
         final Map<String, Object> attributes = new HashMap<>();
         if (record.getType() == StructuralVariantType.DEL) {
-            attributes.put(GATKSVVCFConstants.BAF_HET_RATIO, result.getDelHetRatio());
+            attributes.put(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, result.getDelHetRatio());
         } else {
             final Integer q = EvidenceStatUtils.probToQual(result.getDupKsP(), (byte) 99);
             attributes.put(GATKSVVCFConstants.BAF_KS_QUALITY_ATTRIBUTE, q);

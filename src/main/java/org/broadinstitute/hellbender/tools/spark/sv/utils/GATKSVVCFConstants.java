@@ -114,7 +114,7 @@ public final class GATKSVVCFConstants {
     public static final String DISCORDANT_PAIR_CARRIER_SIGNAL_ATTRIBUTE = "PECS";
     public static final String PESR_QUALITY_ATTRIBUTE = "PESRQ";
     public static final String PESR_CARRIER_SIGNAL_ATTRIBUTE = "PESRCS";
-    public static final String BAF_HET_RATIO = "BAF_HET_RATIO";
+    public static final String BAF_HET_RATIO_ATTRIBUTE = "BAF_HET_RATIO";
     public static final String BAF_KS_QUALITY_ATTRIBUTE = "BAF_KS_QUAL";
     public static final String BAF_KS_STAT_ATTRIBUTE = "BAF_KS_STAT";
 
