@@ -4,7 +4,6 @@ workflow GvsRepopulateFilterSet {
   input {
     String dataset_name
     String project_id
-    String call_set_identifier
 
     String filter_set_name
     File indel_recal_file
