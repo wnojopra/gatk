@@ -96,6 +96,14 @@ workflows:
        branches:
          - master
          - ah_var_store
+   - name: GvsRepopulateFilterSet
+     subclass: WDL
+     primaryDescriptorPath: /scripts/variantstore/wdl/GvsRepopulateFilterSet.wdl
+     filters:
+       branches:
+         - master
+         - ah_var_store
+         - rsa_repopulate_filter
    - name: GvsPopulateAltAllele
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPopulateAltAllele.wdl
