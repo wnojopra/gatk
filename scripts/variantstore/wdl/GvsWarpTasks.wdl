@@ -29,7 +29,7 @@ task SNPsVariantRecalibratorCreateModel {
     }
 
     Int machine_mem = select_first([machine_mem_gb, 100])
-    Int java_mem = machine_mem - 5
+    Int java_mem = machine_mem - 10
 
     command <<<
         set -euo pipefail
