@@ -96,6 +96,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - gg_UpMem
    - name: GvsPopulateAltAllele
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPopulateAltAllele.wdl
@@ -187,6 +188,7 @@ workflows:
          - master
          - ah_var_store
          - rsa_vs_607_drop_state
+         - gg_UpMem
    - name: GvsJointVariantCalling
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsJointVariantCalling.wdl

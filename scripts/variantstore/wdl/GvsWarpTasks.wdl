@@ -29,12 +29,13 @@ task SNPsVariantRecalibratorCreateModel {
     }
 
     Int machine_mem = select_first([machine_mem_gb, 100])
-    Int java_mem = machine_mem - 5
+    Int command_mem = machine_mem - 10
+    Int max_heap = machine_mem - 5
 
     command <<<
         set -euo pipefail
 
-        gatk --java-options -Xms~{java_mem}g \
+        gatk --java-options -Xms~{command_mem}g -Xmx~{max_heap}\
         VariantRecalibrator \
         -V ~{sites_only_variant_filtered_vcf} \
         -O ~{recalibration_filename} \
