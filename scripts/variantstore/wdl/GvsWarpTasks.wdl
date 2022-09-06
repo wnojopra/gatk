@@ -35,7 +35,7 @@ task SNPsVariantRecalibratorCreateModel {
     command <<<
         set -euo pipefail
 
-        gatk --java-options -Xms~{command_mem}g -Xmx~{max_heap} \
+        gatk --java-options "-Xms~{command_mem}g -Xmx~{max_heap}g" \
         VariantRecalibrator \
         -V ~{sites_only_variant_filtered_vcf} \
         -O ~{recalibration_filename} \
