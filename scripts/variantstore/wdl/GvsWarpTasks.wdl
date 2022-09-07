@@ -23,6 +23,8 @@ task SNPsVariantRecalibratorCreateModel {
         File dbsnp_resource_vcf_index
         Boolean use_allele_specific_annotations
         Int max_gaussians = 6
+
+        File monitoring_script = "gs://gvs_quickstart_storage/cromwell_monitoring_script.sh"
         Int? machine_mem_gb
 
         Int disk_size
@@ -34,6 +36,8 @@ task SNPsVariantRecalibratorCreateModel {
 
     command <<<
         set -euo pipefail
+
+        bash ~{monitoring_script} > monitoring.log &
 
         gatk --java-options "-Xms~{command_mem}g -Xmx~{max_heap}g" \
         VariantRecalibrator \
@@ -64,6 +68,7 @@ task SNPsVariantRecalibratorCreateModel {
     }
 
     output {
+        File monitoring_log = "monitoring.log"
         File model_report = "~{model_report_filename}"
     }
 }
