@@ -291,6 +291,8 @@ task ExtractTask {
 
     Int? local_sort_max_records_in_ram = 10000000
 
+    File monitoring_script = "gs://gvs_quickstart_storage/cromwell_monitoring_script.sh"
+
     # for call-caching -- check if DB tables haven't been updated since the last run
     String max_last_modified_timestamp
   }
@@ -303,6 +305,8 @@ task ExtractTask {
   command <<<
     set -e
     export GATK_LOCAL_JAR="~{default="/root/gatk.jar" gatk_override}"
+
+    bash ~{monitoring_script} > monitoring.log &
 
     df -h
 
@@ -372,6 +376,7 @@ task ExtractTask {
 
   # files sizes are floats instead of ints because they can be larger
   output {
+    File monitoring_log = "monitoring.log"
     File output_vcf = "~{output_file}"
     Float output_vcf_bytes = read_float("vcf_bytes.txt")
     File output_vcf_index = "~{output_file}.tbi"
