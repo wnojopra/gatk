@@ -95,6 +95,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - rsa_filter_info_hd_size
    - name: GvsPopulateAltAllele
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsPopulateAltAllele.wdl
