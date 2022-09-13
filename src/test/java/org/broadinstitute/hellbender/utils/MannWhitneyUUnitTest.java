@@ -67,17 +67,20 @@ public class MannWhitneyUUnitTest extends GATKBaseTest {
         Assert.assertEquals(test.getP(), P, DELTA_PRECISION, name);
     }
 
+    /**
+     * Regression test for precision issues
+     */
     @Test
-    public void testTwoSidedPrecision() {
-        final int n = 10000;
-        final int bound = 1000;
+    public void testLargeSampleSize() {
+        final int n = 1000000;
+        final int bound = 1000000;
         final double[] series1 = new double[n];
         final double[] series2 = new double[n];
         for (int i = 0; i < n; i++) {
             series1[i] = rand.nextInt(bound);
             series2[i] = rand.nextInt(bound);
         }
-        MannWhitneyU.Result test = rst.test(series1, series2, MannWhitneyU.TestType.FIRST_DOMINATES);
+        MannWhitneyU.Result test = rst.test(series1, series2, MannWhitneyU.TestType.TWO_SIDED);
         Assert.assertTrue(test.getP() <= 1d);
     }
 
