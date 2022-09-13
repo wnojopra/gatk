@@ -92,6 +92,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     public static final String BAF_PADDING_FRACTION_LONG_NAME = "baf-padding-fraction";
     public static final String MIN_SNP_CARRIERS_LONG_NAME = "min-snp-carriers";
     public static final String MIN_BAF_COUNT_LONG_NAME = "min-baf-count";
+    public static final String MAX_BAF_COUNT_LONG_NAME = "max-baf-count";
     public static final String P_SNP_LONG_NAME = "p-snp";
     public static final String P_MAX_HOMOZYGOUS_LONG_NAME = "p-max-homozygous";
     public static final String X_CHROMOSOME_LONG_NAME = "x-chromosome-name";
@@ -208,7 +209,15 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             minValue = 1,
             optional = true
     )
-    private int minBafCount = 30;
+    private int minBafCount = 10;
+
+    @Argument(
+            doc = "Maximum number of BAF values allowed before subsampling.",
+            fullName = MAX_BAF_COUNT_LONG_NAME,
+            minValue = 1,
+            optional = true
+    )
+    private int maxBafCount = 10;
 
     @Argument(
             doc = "Baseline expected SNPs per locus, used for filtering deletions in likely regions of homozygosity " +
@@ -356,7 +365,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     private void initializeBAFCollection() {
         initializeBAFEvidenceDataSource();
         bafCollector = new BafEvidenceAggregator(bafSource, dictionary, bafPaddingFraction);
-        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, minBafCount, pSnp, pMaxHomozygous);
+        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, minBafCount, maxBafCount, pSnp, pMaxHomozygous);
     }
 
     private void initializeDiscordantPairDataSource() {
@@ -550,8 +559,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         }
         if (bafCollectionEnabled()) {
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF KS test phred-scaled quality"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF KS test statistic"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Mann-Whitney U test phred-scaled quality"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));

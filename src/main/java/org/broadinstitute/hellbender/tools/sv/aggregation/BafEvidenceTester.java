@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.BafEvidence;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecord;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecordUtils;
+import org.broadinstitute.hellbender.utils.MannWhitneyU;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
@@ -19,20 +20,23 @@ public class BafEvidenceTester {
 
     private static final Median MEDIAN = new Median();
     private static final StandardDeviation STDEV = new StandardDeviation();
-    final KolmogorovSmirnovTest KS_TEST =  new KolmogorovSmirnovTest();
+    private final KolmogorovSmirnovTest KS_TEST =  new KolmogorovSmirnovTest();
+    private static final Random RAND = new Random(42);
 
     private final int minSnpCarriers;
     private final int minBafCount;
+    private final int maxBafCount;
     private final double pSnp;
     private final double pMaxHomozygous;
 
-    public BafEvidenceTester(final int minSnpCarriers, final int minBafCount, final double pSnp, final double pMaxHomozygous) {
+    public BafEvidenceTester(final int minSnpCarriers, final int minBafCount, final int maxBafCount, final double pSnp, final double pMaxHomozygous) {
         Utils.validateArg(minSnpCarriers > 0, "minSnpCarriers must be positive");
         Utils.validateArg(minBafCount > 0, "minBafCount must be positive");
         Utils.validateArg(pSnp > 0 && pSnp < 1, "pSnp must be a probability on (0, 1)");
         Utils.validateArg(pMaxHomozygous > 0 && pMaxHomozygous < 1, "pMaxHomozygous must be a probability on (0, 1)");
         this.minSnpCarriers = minSnpCarriers;
         this.minBafCount = minBafCount;
+        this.maxBafCount = maxBafCount;
         this.pSnp = pSnp;
         this.pMaxHomozygous = pMaxHomozygous;
     }
@@ -81,9 +85,8 @@ public class BafEvidenceTester {
         if (record.getType() == StructuralVariantType.DEL) {
             attributes.put(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, result.getDelHetRatio());
         } else {
-            final Integer q = EvidenceStatUtils.probToQual(result.getDupKsP(), (byte) 99);
-            attributes.put(GATKSVVCFConstants.BAF_KS_QUALITY_ATTRIBUTE, q);
-            attributes.put(GATKSVVCFConstants.BAF_KS_STAT_ATTRIBUTE, result.getDupKsStat());
+            final Integer q = EvidenceStatUtils.probToQual(result.getDupMannWhitneyP(), (byte) 99);
+            attributes.put(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, q);
         }
         return SVCallRecordUtils.copyCallWithNewAttributes(record, attributes);
     }
@@ -108,17 +111,32 @@ public class BafEvidenceTester {
             frequencyFilteredEvidence.addAll(buffer);
         }
 
-        final double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1.0 - d)).toArray();
+        double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1. - d)).toArray();
         if (carrierBaf.length < minBafCount) {
             return null;
+        } else if (carrierBaf.length > maxBafCount) {
+            //carrierBaf = shrinkArray(carrierBaf, maxBafCount);
+            //carrierBaf = downsampleArray(carrierBaf, maxBafCount);
         }
-        final double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1.0 - d)).toArray();
+        double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1. - d)).toArray();
         if (nullBaf.length < minBafCount) {
             return null;
+        } else if (nullBaf.length > maxBafCount) {
+            //nullBaf = shrinkArray(nullBaf, maxBafCount);
+            //nullBaf = downsampleArray(nullBaf, maxBafCount);
         }
-        final double stat = KS_TEST.kolmogorovSmirnovStatistic(carrierBaf, nullBaf);
-        final double logP = KS_TEST.kolmogorovSmirnovTest(carrierBaf, nullBaf);
-        return BafResult.createDuplicationResult(logP, stat);
+        //final double stat = KS_TEST.kolmogorovSmirnovStatistic(carrierBaf, nullBaf);
+        //final double p = KS_TEST.monteCarloP(stat, carrierBaf.length, nullBaf.length, true, 10000);
+        //final double p = kolmogorovSmirnovTest(stat, carrierBaf, nullBaf);
+        //return BafResult.createDuplicationResult(p, stat);
+        final MannWhitneyU test = new MannWhitneyU();
+        final MannWhitneyU.Result stat = test.test(carrierBaf, nullBaf, MannWhitneyU.TestType.FIRST_DOMINATES);
+        return BafResult.createDuplicationResult(stat.getP());
+        //final MannWhitneyUTest test = new MannWhitneyUTest();
+        //final double u = (long) carrierBaf.length * nullBaf.length - test.mannWhitneyU(nullBaf, carrierBaf);
+
+        //final double p = calculateAsymptoticPValue(u, carrierBaf.length, nullBaf.length);
+        //return BafResult.createDuplicationResult(p, u);
         /*
         final double nullMedian = MEDIAN.evaluate(nullBaf);
         final double carrierMedian = MEDIAN.evaluate(carrierBaf);
@@ -126,6 +144,43 @@ public class BafEvidenceTester {
         final double carrierStd = STDEV.evaluate(carrierBaf);
         return (nullMedian - carrierMedian) / Math.sqrt(nullStd * nullStd + carrierStd * carrierStd);
         */
+    }
+
+    public double kolmogorovSmirnovTest(final double stat, double[] x, double[] y) {
+        final long lengthProduct = (long) x.length * y.length;
+        if (lengthProduct < 200) {
+            return KS_TEST.exactP(stat, x.length, y.length, true);
+        }
+        if (lengthProduct < 10000) {
+            return KS_TEST.monteCarloP(stat, x.length, y.length, true, 1000000);
+        }
+        return KS_TEST.approximateP(stat, x.length, y.length);
+    }
+
+    private static double[] shrinkArray(final double[] arr, final int size) {
+        if (arr.length <= size) {
+            return arr;
+        }
+        final double[] sorted = Arrays.copyOf(arr, arr.length);
+        Arrays.sort(sorted);
+        final int k = arr.length / size;
+        int j = k / 2;
+        final double[] out = new double[size];
+        for (int i = 0; i < size; i++) {
+            out[i] = sorted[j];
+            j += k;
+        }
+        return out;
+    }
+
+    private static double[] downsampleArray(final double[] arr, final int size) {
+        for (int i = arr.length - 1; i >= arr.length - size; i--) {
+            final double tmp = arr[i];
+            final int j = RAND.nextInt(arr.length);
+            arr[i] = arr[j];
+            arr[j] = tmp;
+        }
+        return Arrays.copyOf(arr, size);
     }
 
 
@@ -191,33 +246,27 @@ public class BafEvidenceTester {
 
     public static final class BafResult {
         private final Double delHetRatio;
-        private final Double dupKsP;
-        private final Double dupKsStat;
+        private final Double dupMannWhitneyP;
 
-        private BafResult(final Double delHetRatio, final Double dupKsP, final Double dupKsStat) {
+        private BafResult(final Double delHetRatio, final Double dupMannWhitneyP) {
             this.delHetRatio = delHetRatio;
-            this.dupKsP = dupKsP;
-            this.dupKsStat = dupKsStat;
+            this.dupMannWhitneyP = dupMannWhitneyP;
         }
 
         private static BafResult createDeletionResult(final double delP) {
-            return new BafResult(delP, null, null);
+            return new BafResult(delP, null);
         }
 
-        private static BafResult createDuplicationResult(final double dupP, final double dupStat) {
-            return new BafResult(null, dupP, dupStat);
+        private static BafResult createDuplicationResult(final double dupP) {
+            return new BafResult(null, dupP);
         }
 
         public Double getDelHetRatio() {
             return delHetRatio;
         }
 
-        public Double getDupKsP() {
-            return dupKsP;
-        }
-
-        public Double getDupKsStat() {
-            return dupKsStat;
+        public Double getDupMannWhitneyP() {
+            return dupMannWhitneyP;
         }
     }
 
