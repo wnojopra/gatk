@@ -72,6 +72,12 @@ public class BafEvidenceTester {
         if (record.getType() == StructuralVariantType.DEL) {
             return calculateDeletionTestStatistic(record.getLength(), sampleStats, carrierSamples, flankSize);
         } else {
+            if (record.getId().equals("ref_panel_1kg_depth_DUP_chr11_78")) {
+                int x = 0;
+            }
+            if (record.getId().equals("ref_panel_1kg_depth_DUP_chr11_231")) {
+                int x = 0;
+            }
             return calculateDuplicationTestStatistic(innerBaf, carrierSamples);
         }
     }
@@ -111,14 +117,14 @@ public class BafEvidenceTester {
             frequencyFilteredEvidence.addAll(buffer);
         }
 
-        double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1. - d)).toArray();
+        double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).toArray();
         if (carrierBaf.length < minBafCount) {
             return null;
         } else if (carrierBaf.length > maxBafCount) {
             //carrierBaf = shrinkArray(carrierBaf, maxBafCount);
             //carrierBaf = downsampleArray(carrierBaf, maxBafCount);
         }
-        double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(d -> Math.min(d, 1. - d)).toArray();
+        double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).toArray();
         if (nullBaf.length < minBafCount) {
             return null;
         } else if (nullBaf.length > maxBafCount) {
@@ -130,7 +136,7 @@ public class BafEvidenceTester {
         //final double p = kolmogorovSmirnovTest(stat, carrierBaf, nullBaf);
         //return BafResult.createDuplicationResult(p, stat);
         final MannWhitneyU test = new MannWhitneyU();
-        final MannWhitneyU.Result stat = test.test(carrierBaf, nullBaf, MannWhitneyU.TestType.FIRST_DOMINATES);
+        final MannWhitneyU.Result stat = test.test(carrierBaf, nullBaf, MannWhitneyU.TestType.TWO_SIDED);
         return BafResult.createDuplicationResult(stat.getP());
         //final MannWhitneyUTest test = new MannWhitneyUTest();
         //final double u = (long) carrierBaf.length * nullBaf.length - test.mannWhitneyU(nullBaf, carrierBaf);

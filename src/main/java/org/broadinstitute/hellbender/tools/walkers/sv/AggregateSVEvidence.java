@@ -559,7 +559,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         }
         if (bafCollectionEnabled()) {
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Mann-Whitney U test phred-scaled quality"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Mann-Whitney U test phred-scaled p-value"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));
