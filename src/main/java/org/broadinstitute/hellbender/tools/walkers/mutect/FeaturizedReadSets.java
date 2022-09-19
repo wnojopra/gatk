@@ -119,8 +119,8 @@ public class FeaturizedReadSets {
         // END DEBUG
 
         // TODO: fix this
-        // I have no idea why this edge case occurs in Ultima data
-        if (mutect3DatasetMode == M2ArgumentCollection.Mutect3DatasetMode.ULTIMA && !bestHaplotypes.containsKey(read)) {
+        // I have no idea why this edge case occurs in Ultima data and maybe sometimes in Illumina
+        if (!bestHaplotypes.containsKey(read)) {
             logger.warn(String.format("Best haplotypes don't contain read %s at position %s:%d.", read.getName(),
                     vc.getContig(), vc.getStart()));
             result.add(3);
