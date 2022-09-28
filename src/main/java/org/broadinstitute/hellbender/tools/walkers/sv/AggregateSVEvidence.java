@@ -177,7 +177,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             minValue = 0,
             optional = true
     )
-    private int bafMinSize = 5000;
+    private int bafMinSize = 0;
 
     @Argument(
             doc = "Maximum variant size for BAF aggregation",
