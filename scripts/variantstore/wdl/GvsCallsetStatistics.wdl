@@ -84,13 +84,13 @@ task CreateTables {
     }
     command <<<
         bash_setup() {
-          # Open file descriptor 123 to write to the xtrace log.
-          exec 123> ".xtrace_log"
-          # Tell `-o xtrace` to write to this descriptor.
-          export BASH_XTRACEFD=123
-          set -o errexit -o nounset -o xtrace -o pipefail
+            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
+            export BASH_XTRACEFD=123
+            # Open file descriptor 123 to write to a dedicated xtrace log.
+            exec ${BASH_XTRACEFD}> ".xtrace_log"
+            # Switch on the helpful options.
+            set -o errexit -o nounset -o xtrace -o pipefail
         }
-
         bash_setup
 
         apk add jq
@@ -414,13 +414,13 @@ task CollectMetricsForChromosome {
     }
     command <<<
         bash_setup() {
-            # Open file descriptor 123 to write to the xtrace log.
-            exec 123> ".xtrace_log"
-            # Tell `-o xtrace` to write to this descriptor.
+            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
             export BASH_XTRACEFD=123
+            # Open file descriptor 123 to write to a dedicated xtrace log.
+            exec ${BASH_XTRACEFD}> ".xtrace_log"
+            # Switch on the helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
-
         bash_setup
 
         echo "project_id = ~{project_id}" > ~/.bigqueryrc
@@ -555,7 +555,15 @@ task AggregateMetricsAcrossChromosomes {
         volatile: true
     }
     command <<<
-        set -o errexit -o nounset -o xtrace -o pipefail
+        bash_setup() {
+            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
+            export BASH_XTRACEFD=123
+            # Open file descriptor 123 to write to a dedicated xtrace log.
+            exec ${BASH_XTRACEFD}> ".xtrace_log"
+            # Switch on the helpful options.
+            set -o errexit -o nounset -o xtrace -o pipefail
+        }
+        bash_setup
 
         bq query --location=US --project_id=~{project_id} --format=csv --use_legacy_sql=false '
             SELECT COUNT(*) from `~{project_id}.~{dataset_name}.~{aggregate_metrics_table}`
@@ -605,6 +613,7 @@ task AggregateMetricsAcrossChromosomes {
     >>>
     output {
         Boolean done = true
+        File xtrace_log = ".xtrace_log"
     }
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/cloud-sdk:404.0.0-alpine"
@@ -629,7 +638,15 @@ task CollectStatistics {
         volatile: true
     }
     command <<<
-        set -o errexit -o nounset -o xtrace -o pipefail
+        bash_setup() {
+            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
+            export BASH_XTRACEFD=123
+            # Open file descriptor 123 to write to a dedicated xtrace log.
+            exec ${BASH_XTRACEFD}> ".xtrace_log"
+            # Switch on the helpful options.
+            set -o errexit -o nounset -o xtrace -o pipefail
+        }
+        bash_setup
 
         bq query --location=US --project_id=~{project_id} --format=csv --use_legacy_sql=false '
             SELECT COUNT(*) from `~{project_id}.~{dataset_name}.~{statistics_table}`
@@ -748,6 +765,7 @@ task CollectStatistics {
     >>>
     output {
         Boolean done = true
+        File xtrace_log = ".xtrace_log"
     }
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/cloud-sdk:404.0.0-alpine"
@@ -767,7 +785,15 @@ task ExportToCSV {
         volatile: true
     }
     command <<<
-        set -o errexit -o nounset -o xtrace -o pipefail
+        bash_setup() {
+            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
+            export BASH_XTRACEFD=123
+            # Open file descriptor 123 to write to a dedicated xtrace log.
+            exec ${BASH_XTRACEFD}> ".xtrace_log"
+            # Switch on the helpful options.
+            set -o errexit -o nounset -o xtrace -o pipefail
+        }
+        bash_setup
 
         bq query --nouse_legacy_sql --project_id=~{project_id} --format=csv --max_rows 1000000000 '
 
@@ -777,6 +803,7 @@ task ExportToCSV {
     >>>
     output {
         File callset_statistics = "~{statistics_table}.csv"
+        File xtrace_log = ".xtrace_log"
     }
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/cloud-sdk:404.0.0-alpine"
