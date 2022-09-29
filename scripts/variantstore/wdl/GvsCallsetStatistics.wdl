@@ -91,7 +91,7 @@ task CreateTables {
           set -o errexit -o nounset -o xtrace -o pipefail
         }
 
-        bash_setup()
+        bash_setup
 
         apk add jq
 
@@ -421,7 +421,7 @@ task CollectMetricsForChromosome {
             set -o errexit -o nounset -o xtrace -o pipefail
         }
 
-        bash_setup()
+        bash_setup
 
         echo "project_id = ~{project_id}" > ~/.bigqueryrc
 
