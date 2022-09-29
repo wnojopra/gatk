@@ -83,7 +83,15 @@ task CreateTables {
         volatile: true
     }
     command <<<
-        set -o errexit -o nounset -o xtrace -o pipefail
+        bash_setup() {
+          # Open file descriptor 123 to write to the xtrace log.
+          exec 123> ".xtrace_log"
+          # Tell `-o xtrace` to write to this descriptor.
+          export BASH_XTRACEFD=123
+          set -o errexit -o nounset -o xtrace -o pipefail
+        }
+
+        bash_setup()
 
         apk add jq
 
@@ -385,6 +393,7 @@ task CreateTables {
     }
     output {
         Boolean done = true
+        File xtrace_log = ".xtrace_log"
     }
 }
 
@@ -404,7 +413,15 @@ task CollectMetricsForChromosome {
         volatile: true
     }
     command <<<
-        set -o errexit -o nounset -o xtrace -o pipefail
+        bash_setup() {
+            # Open file descriptor 123 to write to the xtrace log.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to write to this descriptor.
+            export BASH_XTRACEFD=123
+            set -o errexit -o nounset -o xtrace -o pipefail
+        }
+
+        bash_setup()
 
         echo "project_id = ~{project_id}" > ~/.bigqueryrc
 
@@ -514,6 +531,7 @@ task CollectMetricsForChromosome {
     >>>
     output {
         Boolean done = true
+        File xtrace_log = ".xtrace_log"
     }
     runtime {
         docker: "gcr.io/google.com/cloudsdktool/cloud-sdk:404.0.0-alpine"

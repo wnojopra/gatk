@@ -238,7 +238,7 @@ workflows:
        branches:
          - master
          - ah_var_store
-         - vs_616_split_hail
+         - vs_649_xtrace
    - name: MitochondriaPipeline
      subclass: WDL
      primaryDescriptorPath: /scripts/mitochondria_m2_wdl/MitochondriaPipeline.wdl
