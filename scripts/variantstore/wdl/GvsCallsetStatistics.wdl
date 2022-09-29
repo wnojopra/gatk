@@ -84,11 +84,11 @@ task CreateTables {
     }
     command <<<
         bash_setup() {
-            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
-            export BASH_XTRACEFD=123
             # Open file descriptor 123 to write to a dedicated xtrace log.
-            exec ${BASH_XTRACEFD}> ".xtrace_log"
-            # Switch on the helpful options.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to use this descriptor.
+            export BASH_XTRACEFD=123
+            # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
         bash_setup
@@ -414,11 +414,11 @@ task CollectMetricsForChromosome {
     }
     command <<<
         bash_setup() {
-            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
-            export BASH_XTRACEFD=123
             # Open file descriptor 123 to write to a dedicated xtrace log.
-            exec ${BASH_XTRACEFD}> ".xtrace_log"
-            # Switch on the helpful options.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to use this descriptor.
+            export BASH_XTRACEFD=123
+            # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
         bash_setup
@@ -556,11 +556,11 @@ task AggregateMetricsAcrossChromosomes {
     }
     command <<<
         bash_setup() {
-            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
-            export BASH_XTRACEFD=123
             # Open file descriptor 123 to write to a dedicated xtrace log.
-            exec ${BASH_XTRACEFD}> ".xtrace_log"
-            # Switch on the helpful options.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to use this descriptor.
+            export BASH_XTRACEFD=123
+            # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
         bash_setup
@@ -639,11 +639,11 @@ task CollectStatistics {
     }
     command <<<
         bash_setup() {
-            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
-            export BASH_XTRACEFD=123
             # Open file descriptor 123 to write to a dedicated xtrace log.
-            exec ${BASH_XTRACEFD}> ".xtrace_log"
-            # Switch on the helpful options.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to use this descriptor.
+            export BASH_XTRACEFD=123
+            # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
         bash_setup
@@ -786,11 +786,11 @@ task ExportToCSV {
     }
     command <<<
         bash_setup() {
-            # Tell `-o xtrace` to write to a descriptor for a dedicated xtrace log file.
-            export BASH_XTRACEFD=123
             # Open file descriptor 123 to write to a dedicated xtrace log.
-            exec ${BASH_XTRACEFD}> ".xtrace_log"
-            # Switch on the helpful options.
+            exec 123> ".xtrace_log"
+            # Tell `-o xtrace` to use this descriptor.
+            export BASH_XTRACEFD=123
+            # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
         }
         bash_setup
