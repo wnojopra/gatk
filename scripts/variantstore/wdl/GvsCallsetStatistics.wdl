@@ -90,6 +90,8 @@ task CreateTables {
             export BASH_XTRACEFD=123
             # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
+            # Prepend a timestamp to xtrace log entries.
+            PS4='+\t '
         }
         bash_setup
 
@@ -420,6 +422,8 @@ task CollectMetricsForChromosome {
             export BASH_XTRACEFD=123
             # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
+            # Prepend a timestamp to xtrace log entries.
+            PS4='+\t '
         }
         bash_setup
 
@@ -562,6 +566,8 @@ task AggregateMetricsAcrossChromosomes {
             export BASH_XTRACEFD=123
             # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
+            # Prepend a timestamp to xtrace log entries.
+            PS4='+\t '
         }
         bash_setup
 
@@ -645,6 +651,8 @@ task CollectStatistics {
             export BASH_XTRACEFD=123
             # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
+            # Prepend a timestamp to xtrace log entries.
+            PS4='+\t '
         }
         bash_setup
 
@@ -792,6 +800,8 @@ task ExportToCSV {
             export BASH_XTRACEFD=123
             # Switch on xtrace and some other helpful options.
             set -o errexit -o nounset -o xtrace -o pipefail
+            # Prepend a timestamp to xtrace log entries.
+            PS4='+\t '
         }
         bash_setup
 
