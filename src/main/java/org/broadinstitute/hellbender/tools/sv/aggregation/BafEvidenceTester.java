@@ -72,10 +72,7 @@ public class BafEvidenceTester {
         if (record.getType() == StructuralVariantType.DEL) {
             return calculateDeletionTestStatistic(record.getLength(), sampleStats, carrierSamples, flankSize);
         } else {
-            if (record.getId().equals("ref_panel_1kg_depth_DUP_chr11_78")) {
-                int x = 0;
-            }
-            if (record.getId().equals("ref_panel_1kg_depth_DUP_chr11_231")) {
+            if (record.getId().equals("ref_panel_1kg_depth_DUP_chr19_774")) {
                 int x = 0;
             }
             return calculateDuplicationTestStatistic(innerBaf, carrierSamples);
@@ -117,14 +114,14 @@ public class BafEvidenceTester {
             frequencyFilteredEvidence.addAll(buffer);
         }
 
-        double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).toArray();
+        double[] carrierBaf = frequencyFilteredEvidence.stream().filter(baf -> carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(x -> Math.min(x, 1.0 - x)).toArray();
         if (carrierBaf.length < minBafCount) {
             return null;
         } else if (carrierBaf.length > maxBafCount) {
             //carrierBaf = shrinkArray(carrierBaf, maxBafCount);
             //carrierBaf = downsampleArray(carrierBaf, maxBafCount);
         }
-        double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).toArray();
+        double[] nullBaf = frequencyFilteredEvidence.stream().filter(baf -> !carrierSamples.contains(baf.getSample())).mapToDouble(BafEvidence::getValue).map(x -> Math.min(x, 1.0 - x)).toArray();
         if (nullBaf.length < minBafCount) {
             return null;
         } else if (nullBaf.length > maxBafCount) {
