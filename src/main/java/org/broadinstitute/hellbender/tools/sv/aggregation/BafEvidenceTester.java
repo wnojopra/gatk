@@ -10,7 +10,6 @@ import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.BafEvidence;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecord;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecordUtils;
-import org.broadinstitute.hellbender.utils.MannWhitneyU;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.*;
@@ -88,8 +87,9 @@ public class BafEvidenceTester {
         if (record.getType() == StructuralVariantType.DEL) {
             attributes.put(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, result.getDelHetRatio());
         } else {
-            final Integer q = EvidenceStatUtils.probToQual(result.getDupMannWhitneyP(), (byte) 99);
-            attributes.put(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, q);
+            //final Integer q = EvidenceStatUtils.probToQual(result.getDupMannWhitneyP(), (byte) 99);
+            attributes.put(GATKSVVCFConstants.BAF_DUP_STAT_ATTRIBUTE, result.getDupStat());
+            attributes.put(GATKSVVCFConstants.BAF_DUP_N_ATTRIBUTE, result.getDupN());
         }
         return SVCallRecordUtils.copyCallWithNewAttributes(record, attributes);
     }
@@ -128,13 +128,14 @@ public class BafEvidenceTester {
             //nullBaf = shrinkArray(nullBaf, maxBafCount);
             //nullBaf = downsampleArray(nullBaf, maxBafCount);
         }
-        //final double stat = KS_TEST.kolmogorovSmirnovStatistic(carrierBaf, nullBaf);
+        final double k = KS_TEST.kolmogorovSmirnovStatistic(carrierBaf, nullBaf);
+        return BafResult.createDuplicationResult(k, Math.min(carrierBaf.length, nullBaf.length));
         //final double p = KS_TEST.monteCarloP(stat, carrierBaf.length, nullBaf.length, true, 10000);
         //final double p = kolmogorovSmirnovTest(stat, carrierBaf, nullBaf);
         //return BafResult.createDuplicationResult(p, stat);
-        final MannWhitneyU test = new MannWhitneyU();
-        final MannWhitneyU.Result stat = test.test(carrierBaf, nullBaf, MannWhitneyU.TestType.TWO_SIDED);
-        return BafResult.createDuplicationResult(stat.getP());
+        //final MannWhitneyU test = new MannWhitneyU();
+        //final MannWhitneyU.Result stat = test.test(carrierBaf, nullBaf, MannWhitneyU.TestType.TWO_SIDED);
+        //return BafResult.createDuplicationResult(stat.getP());
         //final MannWhitneyUTest test = new MannWhitneyUTest();
         //final double u = (long) carrierBaf.length * nullBaf.length - test.mannWhitneyU(nullBaf, carrierBaf);
 
@@ -249,27 +250,33 @@ public class BafEvidenceTester {
 
     public static final class BafResult {
         private final Double delHetRatio;
-        private final Double dupMannWhitneyP;
+        private final Double dupStatistic;
+        private final Integer dupN;
 
-        private BafResult(final Double delHetRatio, final Double dupMannWhitneyP) {
+        private BafResult(final Double delHetRatio, final Double dupStatistic, final Integer dupN) {
             this.delHetRatio = delHetRatio;
-            this.dupMannWhitneyP = dupMannWhitneyP;
+            this.dupStatistic = dupStatistic;
+            this.dupN = dupN;
         }
 
         private static BafResult createDeletionResult(final double delP) {
-            return new BafResult(delP, null);
+            return new BafResult(delP, null, null);
         }
 
-        private static BafResult createDuplicationResult(final double dupP) {
-            return new BafResult(null, dupP);
+        private static BafResult createDuplicationResult(final double dupStatistic, final int dupN) {
+            return new BafResult(null, dupStatistic, dupN);
         }
 
         public Double getDelHetRatio() {
             return delHetRatio;
         }
 
-        public Double getDupMannWhitneyP() {
-            return dupMannWhitneyP;
+        public Double getDupStat() {
+            return dupStatistic;
+        }
+
+        public Integer getDupN() {
+            return dupN;
         }
     }
 

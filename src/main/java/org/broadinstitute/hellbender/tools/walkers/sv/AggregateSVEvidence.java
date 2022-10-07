@@ -209,7 +209,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             minValue = 1,
             optional = true
     )
-    private int minBafCount = 10;
+    private int minBafCount = 2;
 
     @Argument(
             doc = "Maximum number of BAF values allowed before subsampling.",
@@ -217,7 +217,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
             minValue = 1,
             optional = true
     )
-    private int maxBafCount = 10;
+    private int maxBafCount = 1000;
 
     @Argument(
             doc = "Baseline expected SNPs per locus, used for filtering deletions in likely regions of homozygosity " +
@@ -559,7 +559,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         }
         if (bafCollectionEnabled()) {
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_MWU_QUALITY_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Mann-Whitney U test phred-scaled p-value"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_DUP_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF Kolmogorov-Smirnov test statistic"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_DUP_N_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Kolmogorov-Smirnov sample size"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));

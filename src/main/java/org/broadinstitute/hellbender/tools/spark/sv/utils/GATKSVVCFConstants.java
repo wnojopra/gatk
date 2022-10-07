@@ -115,7 +115,8 @@ public final class GATKSVVCFConstants {
     public static final String PESR_QUALITY_ATTRIBUTE = "PESRQ";
     public static final String PESR_CARRIER_SIGNAL_ATTRIBUTE = "PESRCS";
     public static final String BAF_HET_RATIO_ATTRIBUTE = "BAF_HET_RATIO";
-    public static final String BAF_MWU_QUALITY_ATTRIBUTE = "BAF_MWU_QUAL";
+    public static final String BAF_DUP_STAT_ATTRIBUTE = "BAF_DUP_STAT";
+    public static final String BAF_DUP_N_ATTRIBUTE = "BAF_DUP_N";
 
     // filter block
     public static final String ASSEMBLY_BASED_VARIANT_MQ_FILTER_KEY = "LOW_MQ";
