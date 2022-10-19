@@ -223,7 +223,7 @@ import java.util.stream.IntStream;
  *          -O intermediate-output
  *
  *     gatk ScoreVariantAnnotations \
- *          -V intermediate-output.vcf \
+ *          -V intermediate-output.vcf.gz \
  *          -A indel_annotation_1 \
  *          ...
  *          -A indel_annotation_M \
@@ -235,6 +235,13 @@ import java.util.stream.IntStream;
  *          --indel-calibration-sensitivity-threshold 0.99 \
  *          -O output
  * </pre>
+ *
+ * <p>
+ *     Note that separate SNP and INDEL resources are shown in the above examples purely for demonstration purposes,
+ *     as are separate training and calibration resources. However, it may be desirable to specify combined
+ *     resource(s); e.g., {@code --resource:combined-resource,training=true,calibration=true combined-resource.vcf}.
+ *     Recall that this is also the case in {@link ExtractVariantAnnotations}.
+ * </p>
  *
  * <h3>Custom modeling/scoring backends (ADVANCED)</h3>
  *

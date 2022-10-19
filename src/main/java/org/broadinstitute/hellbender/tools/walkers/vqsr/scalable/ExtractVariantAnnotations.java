@@ -200,9 +200,15 @@ import java.util.stream.Collectors;
  *          --mode INDEL \
  *          --resource:indel-training,training=true indel-training.vcf \
  *          --resource:indel-calibration,calibration=true indel-calibration.vcf \
- *          --maximum-number-of-unlableled-variants 1000000
+ *          --maximum-number-of-unlabeled-variants 1000000
  *          -O extract
  * </pre>
+ * </p>
+ *
+ * <p>
+ *     Note that separate SNP and INDEL resources are shown in the above examples purely for demonstration purposes,
+ *     as are separate training and calibration resources. However, it may be desirable to specify combined
+ *     resource(s); e.g., {@code --resource:snp-and-indel-resource,training=true,calibration=true snp-and-indel-resource.vcf}.
  * </p>
  *
  * <p>
@@ -221,12 +227,20 @@ import java.util.stream.Collectors;
  *          -A annotation_N \
  *          --mode SNP \
  *          --mode INDEL \
- *          --maximum-number-of-unlableled-variants 1000000
+ *          --maximum-number-of-unlabeled-variants 1000000
  *          -O extract
  * </pre>
  * </p>
  *
- * DEVELOPER NOTE: See documentation in {@link LabeledVariantAnnotationsWalker}.
+ * <p>
+ *     Alternatively, if resource VCFs are unavailable, one might want to specify the input VCF itself as a resource
+ *     and extract annotations for the input variants (or a subset thereof). Again, this may be useful for
+ *     exploratory analyses.
+ * </p>
+ *
+ * <p>
+ *     DEVELOPER NOTE: See documentation in {@link LabeledVariantAnnotationsWalker}.
+ * </p>
  *
  * @author Samuel Lee &lt;slee@broadinstitute.org&gt;
  */
