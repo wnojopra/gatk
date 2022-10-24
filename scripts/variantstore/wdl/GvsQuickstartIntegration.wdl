@@ -71,9 +71,6 @@ workflow GvsQuickstartIntegration {
             filter_set_name = "quickit",
             extract_table_prefix = "quickit",
             extract_scatter_count = extract_scatter_count,
-            # Force filtering off as it is not deterministic and the initial version of this integration test does not
-            # allow for inexact matching of actual and expected results.
-            extract_do_not_filter_override = true,
             drop_state = drop_state
     }
 
