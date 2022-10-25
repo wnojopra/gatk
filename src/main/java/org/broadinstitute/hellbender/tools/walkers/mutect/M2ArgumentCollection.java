@@ -211,7 +211,7 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
 
     public enum Mutect3DatasetMode {
         ILLUMINA(11),
-        ULTIMA(9);
+        ULTIMA(11);
 
         final private int numReadFeatures;
 

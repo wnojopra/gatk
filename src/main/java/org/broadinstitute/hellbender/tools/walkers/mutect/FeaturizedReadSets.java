@@ -108,6 +108,12 @@ public class FeaturizedReadSets {
             result.add(fragmentEnd - vc.getEnd());
         }
 
+        // Ultima-specific read tags
+        if (mutect3DatasetMode == M2ArgumentCollection.Mutect3DatasetMode.ULTIMA) {
+            result.add(read.getAttributeAsInteger("si"));   // si is an integer on the order of 100s or 1000s
+            result.add((int) (1000*read.getAttributeAsFloat("rq")));    // rq is a float from 0 and 1, so we multiply by 1000 and round
+        }
+
         // mismatches versus best haplotype
         final Haplotype haplotype = bestHaplotypes.get(read);
         // DEBUD
