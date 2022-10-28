@@ -65,6 +65,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - ah_experimental_import
    - name: GvsAoUReblockGvcf
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsAoUReblockGvcf.wdl
@@ -111,6 +112,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - ah_experimental_import
    - name: GvsExtractCallset
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsExtractCallset.wdl
