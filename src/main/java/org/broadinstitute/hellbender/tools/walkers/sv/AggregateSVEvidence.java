@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Retrieves PE/SR evidence and performs breakpoint refinement
+ * Annotates records with PE/SR/BAF evidence and performs breakpoint refinement with SR.
  *
  * <h3>Inputs</h3>
  *
@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  * <h3>Usage example</h3>
  *
  * <pre>
- *     gatk AggregatePairedEndAndSplitReadEvidence
+ *     gatk AggregateSVEvidence
  * </pre>
  *
  * @author Mark Walker &lt;markw@broadinstitute.org&gt;
