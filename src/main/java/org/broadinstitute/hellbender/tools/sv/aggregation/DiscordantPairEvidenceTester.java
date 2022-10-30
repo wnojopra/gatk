@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.tools.sv.aggregation;
 
-import com.google.common.collect.Sets;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.DiscordantPairEvidence;
@@ -24,15 +23,13 @@ public class DiscordantPairEvidenceTester {
 
     public DiscordantPairTestResult poissonTestRecord(final SVCallRecord record,
                                                       final List<DiscordantPairEvidence> evidence,
-                                                      final Set<String> excludedSamples) {
+                                                      final Set<String> carrierSamples,
+                                                      final Set<String> backgroundSamples) {
         Utils.nonNull(record);
         SVCallRecordUtils.validateCoordinatesWithDictionary(record, dictionary);
 
-        final Set<String> callSamples = Sets.difference(record.getAllSamples(), excludedSamples);
-        final Set<String> includedCarrierSamples = Sets.difference(record.getCarrierSampleSet(), excludedSamples);
-        final Set<String> includedBackgroundSamples = Sets.difference(callSamples, includedCarrierSamples);
         final int representativeDepth = EvidenceStatUtils.computeRepresentativeDepth(sampleCoverageMap.values());
-        return poissonTest(evidence, includedCarrierSamples, includedBackgroundSamples, representativeDepth);
+        return poissonTest(evidence, carrierSamples, backgroundSamples, representativeDepth);
     }
 
     public SVCallRecord applyToRecord(final SVCallRecord record, final DiscordantPairTestResult discordantPairResult) {

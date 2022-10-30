@@ -54,7 +54,6 @@ public class BreakpointRefiner {
     protected int representativeDepth;
 
     public static final int DEFAULT_MAX_INSERTION_CROSS_DISTANCE = 200;
-    public static final byte MAX_SR_QUALITY = 99;
 
     /**
      * @param sampleCoverageMap map with (sample id, per-base sample coverage) entries
@@ -129,36 +128,31 @@ public class BreakpointRefiner {
     public RefineResult testRecord(final SVCallRecord record,
                                    final List<SplitReadEvidence> startEvidence,
                                    final List<SplitReadEvidence> endEvidence,
-                                   final Set<String> excludedSamples,
+                                   final Set<String> carrierSamples,
+                                   final Set<String> backgroundSamples,
                                    final DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairResult) {
         Utils.nonNull(record);
         SVCallRecordUtils.validateCoordinatesWithDictionary(record, dictionary);
 
-        // Sample sets
-        final Set<String> includedSamples = Sets.difference(record.getAllSamples(), excludedSamples);
-        final Set<String> carrierSamples = record.getCarrierSampleSet();
-        final Set<String> includedCarrierSamples = Sets.difference(carrierSamples, excludedSamples);
-        final Set<String> includedBackgroundSamples = Sets.difference(includedSamples, includedCarrierSamples);
-
         // Refine start
-        final SplitReadSite refinedStartSite = refineSplitReadSite(startEvidence, includedCarrierSamples,
-                includedBackgroundSamples, sampleCoverageMap, representativeDepth, record.getPositionA());
+        final SplitReadSite refinedStartSite = refineSplitReadSite(startEvidence, carrierSamples,
+                backgroundSamples, sampleCoverageMap, representativeDepth, record.getPositionA());
 
         // Refine end
         final int endLowerBound = getEndLowerBound(record, refinedStartSite.getPosition());
         final int defaultEndPosition = Math.max(endLowerBound, record.getPositionB());
         final List<SplitReadEvidence> validEndEvidence = getValidEndSplitReadSites(endEvidence, endLowerBound);
-        final SplitReadSite refinedEndSite = refineSplitReadSite(validEndEvidence, includedCarrierSamples,
-                includedBackgroundSamples, sampleCoverageMap, representativeDepth, defaultEndPosition);
+        final SplitReadSite refinedEndSite = refineSplitReadSite(validEndEvidence, carrierSamples,
+                backgroundSamples, sampleCoverageMap, representativeDepth, defaultEndPosition);
 
         // Compute stats on sum of start and end counts
         final EvidenceStatUtils.PoissonTestResult bothsideResult = calculateBothsideTest(refinedStartSite, refinedEndSite,
-                includedSamples, includedCarrierSamples, includedBackgroundSamples, sampleCoverageMap, representativeDepth);
+                carrierSamples, backgroundSamples, sampleCoverageMap, representativeDepth);
 
         EvidenceStatUtils.PoissonTestResult combinedResult = null;
         if (discordantPairResult != null) {
             combinedResult = calculatePESRTest(refinedStartSite, refinedEndSite,
-                    discordantPairResult, includedSamples, includedCarrierSamples, includedBackgroundSamples,
+                    discordantPairResult, carrierSamples, backgroundSamples,
                     sampleCoverageMap, representativeDepth);
         }
 
@@ -232,13 +226,12 @@ public class BreakpointRefiner {
 
     private static EvidenceStatUtils.PoissonTestResult calculateBothsideTest(final SplitReadSite startSite,
                                                                              final SplitReadSite endSite,
-                                                                             final Set<String> calledSamples,
-                                                                             final Collection<String> carrierSamples,
-                                                                             final Collection<String> backgroundSamples,
+                                                                             final Set<String> carrierSamples,
+                                                                             final Set<String> backgroundSamples,
                                                                              final Map<String, Double> sampleCoverageMap,
                                                                              final double representativeDepth) {
-        final Map<String, Integer> sampleCountSums = new HashMap<>(SVUtils.hashMapCapacity(calledSamples.size()));
-        for (final String sample : calledSamples) {
+        final Map<String, Integer> sampleCountSums = new HashMap<>(SVUtils.hashMapCapacity(carrierSamples.size() + backgroundSamples.size()));
+        for (final String sample : Sets.union(carrierSamples, backgroundSamples)) {
             sampleCountSums.put(sample, startSite.getCount(sample) + endSite.getCount(sample));
         }
         return EvidenceStatUtils.calculateOneSamplePoissonTest(sampleCountSums,
@@ -248,14 +241,13 @@ public class BreakpointRefiner {
     private static EvidenceStatUtils.PoissonTestResult calculatePESRTest(final SplitReadSite startSite,
                                                                          final SplitReadSite endSite,
                                                                          final DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairTestResult,
-                                                                         final Set<String> calledSamples,
-                                                                         final Collection<String> carrierSamples,
-                                                                         final Collection<String> backgroundSamples,
+                                                                         final Set<String> carrierSamples,
+                                                                         final Set<String> backgroundSamples,
                                                                          final Map<String, Double> sampleCoverageMap,
                                                                          final double representativeDepth) {
-        final Map<String, Integer> sampleCountSums = new HashMap<>(SVUtils.hashMapCapacity(calledSamples.size()));
+        final Map<String, Integer> sampleCountSums = new HashMap<>(SVUtils.hashMapCapacity(carrierSamples.size() + backgroundSamples.size()));
         final Map<String, Integer> discordantPairCounts = discordantPairTestResult.getSampleCounts();
-        for (final String sample : calledSamples) {
+        for (final String sample : Sets.union(carrierSamples, backgroundSamples)) {
             sampleCountSums.put(sample, startSite.getCount(sample) + endSite.getCount(sample) + discordantPairCounts.getOrDefault(sample, 0));
         }
         return EvidenceStatUtils.calculateOneSamplePoissonTest(sampleCountSums,

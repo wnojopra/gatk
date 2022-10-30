@@ -72,8 +72,8 @@ import java.util.stream.Collectors;
  */
 
 @CommandLineProgramProperties(
-        summary = "Adds PE/SR evidence to structural variant records",
-        oneLineSummary = "Adds PE/SR evidence to structural variant records",
+        summary = "Annotate SVs with supporting evidence",
+        oneLineSummary = "Annotate SVs with supporting evidence",
         programGroup = StructuralVariantDiscoveryProgramGroup.class
 )
 @ExperimentalFeature
@@ -92,7 +92,6 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     public static final String BAF_PADDING_FRACTION_LONG_NAME = "baf-padding-fraction";
     public static final String MIN_SNP_CARRIERS_LONG_NAME = "min-snp-carriers";
     public static final String MIN_BAF_COUNT_LONG_NAME = "min-baf-count";
-    public static final String MAX_BAF_COUNT_LONG_NAME = "max-baf-count";
     public static final String P_SNP_LONG_NAME = "p-snp";
     public static final String P_MAX_HOMOZYGOUS_LONG_NAME = "p-max-homozygous";
     public static final String X_CHROMOSOME_LONG_NAME = "x-chromosome-name";
@@ -212,14 +211,6 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     private int minBafCount = 2;
 
     @Argument(
-            doc = "Maximum number of BAF values allowed before subsampling.",
-            fullName = MAX_BAF_COUNT_LONG_NAME,
-            minValue = 1,
-            optional = true
-    )
-    private int maxBafCount = 1000;
-
-    @Argument(
             doc = "Baseline expected SNPs per locus, used for filtering deletions in likely regions of homozygosity " +
                     "during BAF assessment.",
             fullName = P_SNP_LONG_NAME,
@@ -286,7 +277,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
 
     private FeatureDataSource<BafEvidence> bafSource;
     private BafEvidenceAggregator bafCollector;
-    private BafEvidenceTester bafEvidenceTester;
+    private BafHetRatioTester bafHetRatioTester;
+    private BafKolmogorovSmirnovTester bafKolmogorovSmirnovTester;
 
     private Map<String,Double> sampleCoverageMap;
     private Set<String> samples;
@@ -365,7 +357,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
     private void initializeBAFCollection() {
         initializeBAFEvidenceDataSource();
         bafCollector = new BafEvidenceAggregator(bafSource, dictionary, bafPaddingFraction);
-        bafEvidenceTester = new BafEvidenceTester(minSnpCarriers, minBafCount, maxBafCount, pSnp, pMaxHomozygous);
+        bafHetRatioTester = new BafHetRatioTester(pSnp, pMaxHomozygous);
+        bafKolmogorovSmirnovTester = new BafKolmogorovSmirnovTester(minSnpCarriers, minBafCount);
     }
 
     private void initializeDiscordantPairDataSource() {
@@ -510,21 +503,29 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         SVCallRecord record = SVCallRecordUtils.create(variant);
         final Set<String> excludedSamples = getSamplesToExcludeForStatsBySex(record);
         flushOutputBuffer(record.getPositionAInterval());
+        final Set<String> allSamples = Sets.difference(record.getAllSamples(), excludedSamples);
+        final Set<String> carrierSamples = Sets.intersection(record.getCarrierSampleSet(), allSamples);
+        final Set<String> backgroundSamples = Sets.difference(carrierSamples, allSamples);
         if (bafCollectionEnabled() && useBafEvidence(record)) {
-            final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record);
-            final BafEvidenceTester.BafResult result = bafEvidenceTester.calculateLogLikelihood(record, bafEvidence, excludedSamples, (int) bafPaddingFraction * record.getLength());
-            record = bafEvidenceTester.applyToRecord(record, result);
+            final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record).stream().filter(baf -> allSamples.contains(baf.getSample())).collect(Collectors.toList());
+            if (record.getType() == StructuralVariantType.DEL) {
+                final Double result = bafHetRatioTester.test(record, bafEvidence, allSamples, carrierSamples, (int) bafPaddingFraction * record.getLength());
+                record = bafHetRatioTester.applyToRecord(record, result);
+            } else if (record.getType() == StructuralVariantType.DUP) {
+                final BafKolmogorovSmirnovTester.KSTestResult result = bafKolmogorovSmirnovTester.test(record, bafEvidence, carrierSamples);
+                record = bafKolmogorovSmirnovTester.applyToRecord(record, result);
+            }
         }
         DiscordantPairEvidenceTester.DiscordantPairTestResult discordantPairResult = null;
         if (discordantPairCollectionEnabled() && useDiscordantPairEvidence(record)) {
             final List<DiscordantPairEvidence> discordantPairEvidence = discordantPairCollector.collectEvidence(record);
-            discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, excludedSamples);
+            discordantPairResult = discordantPairEvidenceTester.poissonTestRecord(record, discordantPairEvidence, carrierSamples, backgroundSamples);
             record = discordantPairEvidenceTester.applyToRecord(record, discordantPairResult);
         }
         if (splitReadCollectionEnabled() && useSplitReadEvidence(record)) {
             final List<SplitReadEvidence> startSplitReadEvidence = startSplitCollector.collectEvidence(record);
             final List<SplitReadEvidence> endSplitReadEvidence = endSplitCollector.collectEvidence(record);
-            final BreakpointRefiner.RefineResult result = breakpointRefiner.testRecord(record, startSplitReadEvidence, endSplitReadEvidence, excludedSamples, discordantPairResult);
+            final BreakpointRefiner.RefineResult result = breakpointRefiner.testRecord(record, startSplitReadEvidence, endSplitReadEvidence, carrierSamples, backgroundSamples, discordantPairResult);
             record = breakpointRefiner.applyToRecord(record, result);
         }
         outputBuffer.add(SVCallRecordUtils.getVariantBuilder(record).make());
@@ -559,8 +560,8 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         }
         if (bafCollectionEnabled()) {
             header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_HET_RATIO_ATTRIBUTE, 1, VCFHeaderLineType.Float, "Log ratio of non-carrier to carrier het count"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_DUP_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF Kolmogorov-Smirnov test statistic"));
-            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_DUP_N_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Kolmogorov-Smirnov sample size"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_STAT_ATTRIBUTE, 1, VCFHeaderLineType.Float, "BAF Kolmogorov-Smirnov test statistic"));
+            header.addMetaDataLine(new VCFInfoHeaderLine(GATKSVVCFConstants.BAF_KS_Q_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "BAF Kolmogorov-Smirnov test phred-scaled p-value"));
         }
         if (discordantPairCollectionEnabled()) {
             header.addMetaDataLine(new VCFFormatHeaderLine(GATKSVVCFConstants.DISCORDANT_PAIR_COUNT_ATTRIBUTE, 1, VCFHeaderLineType.Integer, "Discordant pair count"));
