@@ -102,7 +102,7 @@ public class BafKolmogorovSmirnovTester {
 
     public double calculateP(final double stat, final int n, final int m) {
         final long lengthProduct = (long) n * m;
-        if (lengthProduct < 200) {
+        if (lengthProduct < 100) {
             return KS_TEST.exactP(stat, n, m, true);
         }
         return KS_TEST.approximateP(stat, n, m);
