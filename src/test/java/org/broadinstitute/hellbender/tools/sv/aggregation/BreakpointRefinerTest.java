@@ -366,11 +366,14 @@ public class BreakpointRefinerTest extends GATKBaseTest {
         sampleCoverageMap.put("sample2", 25.);
 
         final BreakpointRefiner refiner = new BreakpointRefiner(sampleCoverageMap, 20, DICTIONARY);
-        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence, excludedSamples, null);
+        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence,
+                Sets.difference(carrierSamples, excludedSamples), Sets.difference(backgroundSamples, excludedSamples), null);
         final SVCallRecord test = refiner.applyToRecord(record, result);
         Assert.assertEquals(test.getId(), "call1");
-        Assert.assertEquals(test.getPositionA(), expectedPositionA);
-        Assert.assertEquals(test.getPositionB(), expectedPositionB);
+        Assert.assertEquals(test.getPositionA(), 1000);
+        Assert.assertEquals(test.getPositionB(), 2000);
+        Assert.assertEquals(test.getAttributes().get(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE), expectedPositionA);
+        Assert.assertEquals(test.getAttributes().get(GATKSVVCFConstants.END_SPLIT_POSITION_ATTRIBUTE), expectedPositionB);
         Assert.assertEquals(test.getType(), StructuralVariantType.DEL);
         Assert.assertEquals(test.getAlgorithms(), Collections.singletonList("pesr"));
         Assert.assertEquals(test.getAttributes().get("TEST_KEY"), "TEST_VALUE");
@@ -415,11 +418,12 @@ public class BreakpointRefinerTest extends GATKBaseTest {
         );
 
         final BreakpointRefiner refiner = new BreakpointRefiner(sampleCoverageMap, maxInsertionSplitReadCrossDistance, DICTIONARY);
-        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence, Collections.emptySet(), null);
+        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence,
+                Collections.singleton("sample1"), Collections.emptySet(), null);
         final SVCallRecord test = refiner.applyToRecord(record, result);
         Assert.assertEquals(test.getId(), "call1");
-        Assert.assertEquals(test.getPositionA(), 985);
-        Assert.assertEquals(test.getPositionB(), 985);
+        Assert.assertEquals(test.getPositionA(), 1000);
+        Assert.assertEquals(test.getPositionB(), 1001);
         Assert.assertEquals(test.getAlgorithms(), Collections.singletonList("pesr"));
         Assert.assertEquals(test.getLength(), Integer.valueOf(500));
         Assert.assertEquals((int) test.getAttributes().get(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE), 995);
@@ -454,13 +458,16 @@ public class BreakpointRefinerTest extends GATKBaseTest {
         );
 
         final BreakpointRefiner refiner = new BreakpointRefiner(sampleCoverageMap, 20, DICTIONARY);
-        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence, Collections.emptySet(), null);
+        final BreakpointRefiner.RefineResult result = refiner.testRecord(record, startEvidence, endEvidence,
+                Collections.singleton("sample1"), Collections.emptySet(), null);
         final SVCallRecord test = refiner.applyToRecord(record, result);
         Assert.assertEquals(test.getId(), "call1");
         Assert.assertEquals(test.getContigA(), "chr21");
         Assert.assertEquals(test.getPositionA(), 1000);
+        Assert.assertEquals(test.getAttributes().get(GATKSVVCFConstants.START_SPLIT_POSITION_ATTRIBUTE), 1000);
         Assert.assertEquals(test.getContigB(), "chr22");
-        Assert.assertEquals(test.getPositionB(), 1);
+        Assert.assertEquals(test.getPositionB(), 8000);
+        Assert.assertEquals(test.getAttributes().get(GATKSVVCFConstants.END_SPLIT_POSITION_ATTRIBUTE), 1);
         Assert.assertEquals(test.getAlgorithms(), Collections.singletonList("pesr"));
         final Integer startCount = VariantContextGetters.getAttributeAsInt(test.getGenotypes().get("sample1"),
                 GATKSVVCFConstants.START_SPLIT_READ_COUNT_ATTRIBUTE, -1);
