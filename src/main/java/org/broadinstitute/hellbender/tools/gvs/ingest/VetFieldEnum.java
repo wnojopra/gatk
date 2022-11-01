@@ -11,6 +11,7 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.gvs.common.CommonCode;
 import org.broadinstitute.hellbender.tools.walkers.annotator.AnnotationUtils;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -409,8 +410,14 @@ public enum VetFieldEnum {
                     .mapToObj(String::valueOf)
                     .collect(Collectors.joining(VCFConstants.INFO_FIELD_ARRAY_SEPARATOR)) : "";
         }
-    };
+    },
 
+    all_attributes {
+        public String getColumnValue(final VariantContext variant, final boolean forceLoadingFromNonAlleleSpecific) {
+            JSONObject attMap = new JSONObject(variant.getAttributes());
+            return attMap.toString();
+        }
+    };
 
     public String getColumnValue(final VariantContext variant, final boolean forceLoadingFromNonAlleleSpecific) {
         throw new IllegalArgumentException("Not implemented");
