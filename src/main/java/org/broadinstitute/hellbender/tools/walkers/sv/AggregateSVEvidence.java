@@ -505,7 +505,7 @@ public final class AggregateSVEvidence extends TwoPassVariantWalker {
         flushOutputBuffer(record.getPositionAInterval());
         final Set<String> allSamples = Sets.difference(record.getAllSamples(), excludedSamples);
         final Set<String> carrierSamples = Sets.intersection(record.getCarrierSampleSet(), allSamples);
-        final Set<String> backgroundSamples = Sets.difference(carrierSamples, allSamples);
+        final Set<String> backgroundSamples = Sets.difference(allSamples, carrierSamples);
         if (bafCollectionEnabled() && useBafEvidence(record)) {
             final List<BafEvidence> bafEvidence = bafCollector.collectEvidence(record).stream().filter(baf -> allSamples.contains(baf.getSample())).collect(Collectors.toList());
             if (record.getType() == StructuralVariantType.DEL) {
