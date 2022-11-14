@@ -72,6 +72,9 @@ public class SchemaUtils {
     public static final String LOAD_STATUS_FIELD_NAME = "status";
     public static final String LOAD_STATUS_EVENT_TIMESTAMP_NAME = "event_timestamp";
 
+    public static final String ATTRIBUTE_SCHEMAS_SAMPLE_ID_FIELD_NAME = "sample_id";
+    public static final String ATTRIBUTE_SCHEMAS_SCHEMA_FIELD_NAME = "attribute_schema";
+
     public static final long chromAdjustment = 1000000000000L;
 
     public static long encodeLocation(String chrom, int position) {

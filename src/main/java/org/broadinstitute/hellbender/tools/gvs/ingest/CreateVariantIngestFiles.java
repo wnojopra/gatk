@@ -6,6 +6,7 @@ import htsjdk.samtools.util.RuntimeIOException;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.barclay.argparser.Argument;
@@ -25,6 +26,8 @@ import org.broadinstitute.hellbender.utils.bigquery.BigQueryUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -178,6 +181,13 @@ public final class CreateVariantIngestFiles extends VariantWalker {
         // TODO if you change here, also change in CreateArrayIngestFiles
         // Get sample name
         final VCFHeader inputVCFHeader = getHeaderForVariants();
+
+        Collection<VCFInfoHeaderLine> infoHeaders = inputVCFHeader.getInfoHeaderLines();
+        HashMap<String, String> headers = new HashMap<>();
+        for (VCFInfoHeaderLine line : infoHeaders) {
+            headers.put(line.getID(), line.getSource());
+        }
+
         String sampleName = sampleNameParam == null ? IngestUtils.getSampleName(inputVCFHeader) : sampleNameParam;
         if (sampleIdParam == null && sampleMap == null) {
             throw new IllegalArgumentException("One of sample-id or sample-name-mapping must be specified");

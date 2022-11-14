@@ -18,6 +18,8 @@ workflow GvsAssignIds {
   String sample_info_table = "sample_info"
   String sample_info_schema_json = '[{"name": "sample_name","type": "STRING","mode": "REQUIRED"},{"name": "sample_id","type": "INTEGER","mode": "NULLABLE"},{"name":"is_loaded","type":"BOOLEAN","mode":"NULLABLE"},{"name":"is_control","type":"BOOLEAN","mode":"REQUIRED"},{"name":"withdrawn","type":"TIMESTAMP","mode":"NULLABLE"},{"name": "schema_id", "mode": "NULLABLE", "type": "INTEGER"}]'
   String sample_load_status_json = '[{"name": "sample_id","type": "INTEGER","mode": "REQUIRED"},{"name":"status","type":"STRING","mode":"REQUIRED"}, {"name":"event_timestamp","type":"TIMESTAMP","mode":"REQUIRED"}]'
+  String vcf_schemas_json = '[{"name": "schema_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_shema_hash","mode": "REQUIRED","type": "STRING","description": "md5 hash of json object"}]'
+  String sample_vcf_schemas_raw_json = '[{"name": "sample_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_shema_hash","mode": "NULLABLE","type": "STRING","description": "md5 hash of json object"}]'
 
   call GvsCreateTables.CreateTables as CreateSampleInfoTable {
   	input:
@@ -36,6 +38,29 @@ workflow GvsAssignIds {
       dataset_name = dataset_name,
       datatype = "sample_load_status",
       schema_json = sample_load_status_json,
+      max_table_id = 1,
+      superpartitioned = "false",
+      partitioned = "false"
+  }
+
+  # we'll empty and delete this table later as part of filling the final vcf_schemas table below
+  call GvsCreateTables.CreateTables as CreateRawSampleVCFSchemasTable {
+    input:
+      project_id = project_id,
+      dataset_name = dataset_name,
+      datatype = "sample_vcf_schemas_raw",
+      schema_json = sample_vcf_schemas_raw_json,
+      max_table_id = 1,
+      superpartitioned = "false",
+      partitioned = "false"
+  }
+
+  call GvsCreateTables.CreateTables as CreateVCFSchemasTable {
+    input:
+      project_id = project_id,
+      dataset_name = dataset_name,
+      datatype = "vcf_schemas",
+      schema_json = vcf_schemas_json,
       max_table_id = 1,
       superpartitioned = "false",
       partitioned = "false"
