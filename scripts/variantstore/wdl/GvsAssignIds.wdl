@@ -18,8 +18,8 @@ workflow GvsAssignIds {
   String sample_info_table = "sample_info"
   String sample_info_schema_json = '[{"name": "sample_name","type": "STRING","mode": "REQUIRED"},{"name": "sample_id","type": "INTEGER","mode": "NULLABLE"},{"name":"is_loaded","type":"BOOLEAN","mode":"NULLABLE"},{"name":"is_control","type":"BOOLEAN","mode":"REQUIRED"},{"name":"withdrawn","type":"TIMESTAMP","mode":"NULLABLE"},{"name": "schema_id", "mode": "NULLABLE", "type": "INTEGER"}]'
   String sample_load_status_json = '[{"name": "sample_id","type": "INTEGER","mode": "REQUIRED"},{"name":"status","type":"STRING","mode":"REQUIRED"}, {"name":"event_timestamp","type":"TIMESTAMP","mode":"REQUIRED"}]'
-  String vcf_schemas_json = '[{"name": "schema_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_shema_hash","mode": "REQUIRED","type": "STRING","description": "md5 hash of json object"}]'
-  String sample_vcf_schemas_raw_json = '[{"name": "sample_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_shema_hash","mode": "NULLABLE","type": "STRING","description": "md5 hash of json object"}]'
+  String vcf_schemas_json = '[{"name": "schema_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_schema_hash","mode": "REQUIRED","type": "STRING","description": "md5 hash of json object"}]'
+  String sample_vcf_schemas_raw_json = '[{"name": "sample_id","mode": "REQUIRED","type": "INTEGER"},{"name": "vcf_schema","mode": "REQUIRED","type": "JSON"},{"name": "vcf_schema_hash","mode": "NULLABLE","type": "STRING","description": "md5 hash of json object"}]'
 
   call GvsCreateTables.CreateTables as CreateSampleInfoTable {
   	input:
