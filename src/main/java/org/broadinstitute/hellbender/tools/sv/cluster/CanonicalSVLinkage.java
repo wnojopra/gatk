@@ -157,7 +157,7 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
             final int sizeSimilarityLengthA = getLength(a, INSERTION_ASSUMED_LENGTH_FOR_SIZE_SIMILARITY);
             final int sizeSimilarityLengthB = getLength(b, INSERTION_ASSUMED_LENGTH_FOR_SIZE_SIMILARITY);
             final boolean hasSizeSimilarity = Math.min(sizeSimilarityLengthA, sizeSimilarityLengthB) / (double) Math.max(sizeSimilarityLengthA, sizeSimilarityLengthB) >= params.getSizeSimilarity();
-            if (params.requiresOverlapAndProximity() && !(hasReciprocalOverlap || hasSizeSimilarity)) {
+            if (params.requiresOverlapAndProximity() && !(hasReciprocalOverlap && hasSizeSimilarity)) {
                 return false;
             } else if (!params.requiresOverlapAndProximity() && hasReciprocalOverlap && hasSizeSimilarity) {
                 return true;
