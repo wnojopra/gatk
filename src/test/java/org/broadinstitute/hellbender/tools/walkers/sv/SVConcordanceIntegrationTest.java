@@ -68,9 +68,9 @@ public class SVConcordanceIntegrationTest extends CommandLineProgramTest {
         final Pair<VCFHeader, List<VariantContext>> outputVcf = VariantContextTestUtils.readEntireVCFIntoMemory(output.getAbsolutePath());
 
         final SAMSequenceDictionary dictionary = SVTestUtils.hg38Dict;
-        final ClusteringParameters depthParameters = ClusteringParameters.createDepthParameters(0.5, 2000, 0);
-        final ClusteringParameters mixedParameters = ClusteringParameters.createMixedParameters(0.1, 2000, 0);
-        final ClusteringParameters pesrParameters = ClusteringParameters.createPesrParameters(0.1, 500, 0);
+        final ClusteringParameters depthParameters = ClusteringParameters.createDepthParameters(0.5, 0, 2000, 0);
+        final ClusteringParameters mixedParameters = ClusteringParameters.createMixedParameters(0.1, 0, 2000, 0);
+        final ClusteringParameters pesrParameters = ClusteringParameters.createPesrParameters(0.1, 0, 500, 0);
         final SVConcordanceLinkage linkage = new SVConcordanceLinkage(dictionary);
         linkage.setDepthOnlyParams(depthParameters);
         linkage.setMixedParams(mixedParameters);
