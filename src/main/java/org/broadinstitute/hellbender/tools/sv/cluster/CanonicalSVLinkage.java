@@ -38,30 +38,36 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
     public static final int INSERTION_ASSUMED_LENGTH_FOR_OVERLAP = 50;
 
     public static final double DEFAULT_RECIPROCAL_OVERLAP_DEPTH_ONLY = 0.8;
+    public static final double DEFAULT_SIZE_SIMILARITY_DEPTH_ONLY = 0;
     public static final int DEFAULT_WINDOW_DEPTH_ONLY = 0;
     public static final double DEFAULT_SAMPLE_OVERLAP_DEPTH_ONLY = 0;
 
     public static final double DEFAULT_RECIPROCAL_OVERLAP_MIXED = 0.8;
+    public static final double DEFAULT_SIZE_SIMILARITY_MIXED = 0;
     public static final int DEFAULT_WINDOW_MIXED = 1000;
     public static final double DEFAULT_SAMPLE_OVERLAP_MIXED = 0;
 
     public static final double DEFAULT_RECIPROCAL_OVERLAP_PESR = 0.5;
+    public static final double DEFAULT_SIZE_SIMILARITY_PESR = 0;
     public static final int DEFAULT_WINDOW_PESR = 500;
     public static final double DEFAULT_SAMPLE_OVERLAP_PESR = 0;
 
     public static final ClusteringParameters DEFAULT_DEPTH_ONLY_PARAMS =
             ClusteringParameters.createDepthParameters(
                     DEFAULT_RECIPROCAL_OVERLAP_DEPTH_ONLY,
+                    DEFAULT_SIZE_SIMILARITY_DEPTH_ONLY,
                     DEFAULT_WINDOW_DEPTH_ONLY,
                     DEFAULT_SAMPLE_OVERLAP_DEPTH_ONLY);
     public static final ClusteringParameters DEFAULT_MIXED_PARAMS =
             ClusteringParameters.createMixedParameters(
                     DEFAULT_RECIPROCAL_OVERLAP_MIXED,
+                    DEFAULT_SIZE_SIMILARITY_MIXED,
                     DEFAULT_WINDOW_MIXED,
                     DEFAULT_SAMPLE_OVERLAP_MIXED);
     public static final ClusteringParameters DEFAULT_PESR_PARAMS =
             ClusteringParameters.createPesrParameters(
                     DEFAULT_RECIPROCAL_OVERLAP_PESR,
+                    DEFAULT_SIZE_SIMILARITY_PESR,
                     DEFAULT_WINDOW_PESR,
                     DEFAULT_SAMPLE_OVERLAP_PESR);
 
@@ -150,6 +156,18 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
             if (params.requiresOverlapAndProximity() && !hasReciprocalOverlap) {
                 return false;
             } else if (!params.requiresOverlapAndProximity() && hasReciprocalOverlap) {
+                return true;
+            }
+        }
+
+        // Size similarity
+        if (params.getSizeSimilarity() > 0) {
+            final double lengthA = Math.max(getLengthForOverlap(a), 1);
+            final double lengthB = Math.max(getLengthForOverlap(b), 1);
+            final boolean hasSizeSimilarity = Math.min(lengthA, lengthB) / Math.max(lengthA, lengthB) >= params.getSizeSimilarity();
+            if (params.requiresOverlapAndProximity() && !hasSizeSimilarity) {
+                return false;
+            } else if (!params.requiresOverlapAndProximity() && hasSizeSimilarity) {
                 return true;
             }
         }

@@ -344,7 +344,7 @@ public class SVClusterEngineTest {
                 1002, Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM), Collections.emptyList(), Collections.emptyList(), Collections.emptyMap(), SVTestUtils.hg38Dict);
         // Cluster with default parameters
         Assert.assertTrue(testEngine1.getLinkage().areClusterable(call1, call2));
-        final ClusteringParameters exactMatchParameters = ClusteringParameters.createDepthParameters(1.0, 0, 1.0);
+        final ClusteringParameters exactMatchParameters = ClusteringParameters.createDepthParameters(1.0, 0, 0, 1.0);
         final CanonicalSVLinkage<SVCallRecord> exactMatchLinkage = SVTestUtils.getNewDefaultLinkage();
         exactMatchLinkage.setDepthOnlyParams(exactMatchParameters);
         // Do not cluster requiring exact overlap
