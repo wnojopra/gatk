@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.sv;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.variant.variantcontext.GenotypesContext;
+import htsjdk.variant.variantcontext.StructuralVariantType;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
@@ -384,7 +385,7 @@ public final class SVCluster extends MultiVariantWalker {
                       final ReferenceContext referenceContext, final FeatureContext featureContext) {
         final SVCallRecord call = SVCallRecordUtils.create(variant);
         final SVCallRecord filteredCall;
-        if (fastMode) {
+        if (fastMode && call.getType() != StructuralVariantType.CNV) {
             // Strip out non-carrier genotypes to save memory and compute
             final GenotypesContext filteredGenotypes = GenotypesContext.copy(call.getCarrierGenotypeList());
             filteredCall = SVCallRecordUtils.copyCallWithNewGenotypes(call, filteredGenotypes);

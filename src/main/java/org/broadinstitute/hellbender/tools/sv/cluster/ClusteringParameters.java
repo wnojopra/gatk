@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.sv.cluster;
 
 import org.broadinstitute.hellbender.tools.sv.SVCallRecord;
-import org.broadinstitute.hellbender.utils.Utils;
 
 import java.util.function.BiPredicate;
 
@@ -58,9 +57,6 @@ public class ClusteringParameters {
     }
 
     public static ClusteringParameters createDepthParameters(final double reciprocalOverlap, final double sizeSimilarity, final int window, final double sampleOverlap) {
-        // Since this uses OR logic for overlap/size similarity/breakend window, require that there be at least some
-        // overlap so that we don't match on size similarity alone
-        Utils.validate(reciprocalOverlap > 0, "Reciprocal overlap for depth-only clustering must be positive");
         return new ClusteringParameters(reciprocalOverlap, sizeSimilarity, window, sampleOverlap, false, (a,b) -> a.isDepthOnly() && b.isDepthOnly());
     }
 

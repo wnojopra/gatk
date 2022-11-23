@@ -36,6 +36,7 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
     protected ClusteringParameters evidenceParams;
 
     public static final int INSERTION_ASSUMED_LENGTH_FOR_OVERLAP = 50;
+    public static final int INSERTION_ASSUMED_LENGTH_FOR_SIZE_SIMILARITY = 1;
 
     public static final double DEFAULT_RECIPROCAL_OVERLAP_DEPTH_ONLY = 0.8;
     public static final double DEFAULT_SIZE_SIMILARITY_DEPTH_ONLY = 0;
@@ -147,27 +148,18 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
             return false;
         }
 
-        // Reciprocal overlap
+        // Reciprocal overlap and size similarity
         // Check bypassed if both are inter-chromosomal
         if (a.isIntrachromosomal()) {
-            final SimpleInterval intervalA = new SimpleInterval(a.getContigA(), a.getPositionA(), a.getPositionA() + getLengthForOverlap(a) - 1);
-            final SimpleInterval intervalB = new SimpleInterval(b.getContigA(), b.getPositionA(), b.getPositionA() + getLengthForOverlap(b) - 1);
+            final SimpleInterval intervalA = new SimpleInterval(a.getContigA(), a.getPositionA(), a.getPositionA() + getLength(a, INSERTION_ASSUMED_LENGTH_FOR_OVERLAP) - 1);
+            final SimpleInterval intervalB = new SimpleInterval(b.getContigA(), b.getPositionA(), b.getPositionA() + getLength(b, INSERTION_ASSUMED_LENGTH_FOR_OVERLAP) - 1);
             final boolean hasReciprocalOverlap = IntervalUtils.isReciprocalOverlap(intervalA, intervalB, params.getReciprocalOverlap());
-            if (params.requiresOverlapAndProximity() && !hasReciprocalOverlap) {
+            final int sizeSimilarityLengthA = getLength(a, INSERTION_ASSUMED_LENGTH_FOR_SIZE_SIMILARITY);
+            final int sizeSimilarityLengthB = getLength(b, INSERTION_ASSUMED_LENGTH_FOR_SIZE_SIMILARITY);
+            final boolean hasSizeSimilarity = Math.min(sizeSimilarityLengthA, sizeSimilarityLengthB) / (double) Math.max(sizeSimilarityLengthA, sizeSimilarityLengthB) >= params.getSizeSimilarity();
+            if (params.requiresOverlapAndProximity() && !(hasReciprocalOverlap || hasSizeSimilarity)) {
                 return false;
-            } else if (!params.requiresOverlapAndProximity() && hasReciprocalOverlap) {
-                return true;
-            }
-        }
-
-        // Size similarity
-        if (params.getSizeSimilarity() > 0) {
-            final double lengthA = Math.max(getLengthForOverlap(a), 1);
-            final double lengthB = Math.max(getLengthForOverlap(b), 1);
-            final boolean hasSizeSimilarity = Math.min(lengthA, lengthB) / Math.max(lengthA, lengthB) >= params.getSizeSimilarity();
-            if (params.requiresOverlapAndProximity() && !hasSizeSimilarity) {
-                return false;
-            } else if (!params.requiresOverlapAndProximity() && hasSizeSimilarity) {
+            } else if (!params.requiresOverlapAndProximity() && hasReciprocalOverlap && hasSizeSimilarity) {
                 return true;
             }
         }
@@ -190,10 +182,10 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
     /**
      * Gets event length used for overlap testing.
      */
-    private static int getLengthForOverlap(final SVCallRecord record) {
-        Utils.validate(record.isIntrachromosomal(), "Record even must be intra-chromosomal");
+    private static int getLength(final SVCallRecord record, final int missingInsertionLength) {
+        Utils.validate(record.isIntrachromosomal(), "Record must be intra-chromosomal");
         if (record.getType() == StructuralVariantType.INS) {
-            return record.getLength() == null ? INSERTION_ASSUMED_LENGTH_FOR_OVERLAP : Math.max(record.getLength(), 1);
+            return record.getLength() == null ? missingInsertionLength : Math.max(record.getLength(), 1);
         } else if (record.getType() == StructuralVariantType.BND) {
             return record.getPositionB() - record.getPositionA() + 1;
         } else {
@@ -229,7 +221,7 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
 
         // Reciprocal overlap window
         final int maxPositionByOverlap;
-        final int maxPosition = (int) (call.getPositionA() + (1.0 - params.getReciprocalOverlap()) * getLengthForOverlap(call));
+        final int maxPosition = (int) (call.getPositionA() + (1.0 - params.getReciprocalOverlap()) * getLength(call, INSERTION_ASSUMED_LENGTH_FOR_OVERLAP));
         maxPositionByOverlap = Math.min(maxPosition, contigLength);
 
         if (params.requiresOverlapAndProximity()) {
