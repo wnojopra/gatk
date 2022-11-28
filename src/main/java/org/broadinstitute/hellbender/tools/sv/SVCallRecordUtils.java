@@ -331,9 +331,13 @@ public final class SVCallRecordUtils {
             }
             contigB = variant.getAttributeAsString(GATKSVVCFConstants.CONTIG2_ATTRIBUTE, null);
             positionB = variant.getAttributeAsInt(GATKSVVCFConstants.END2_ATTRIBUTE, 0);
-        } else {
+        }  else {
             contigB = contigA;
-            positionB = variant.getEnd();
+            if (type.equals(StructuralVariantType.INS)) {
+                positionB = positionA + 1;
+            } else {
+                positionB = variant.getEnd();
+            }
         }
 
         final List<Allele> alleles;
