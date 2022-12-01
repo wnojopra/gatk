@@ -143,6 +143,9 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
                                                      final ClusteringParameters params,
                                                      final SAMSequenceDictionary dictionary) {
 
+        if (a.getId().equals("AoUSVPhaseI.chr21.final_cleanup_DUP_chr21_470") || b.getId().equals("AoUSVPhaseI.chr21.final_cleanup_DUP_chr21_470")) {
+            int x = 0;
+        }
         // Contigs match
         if (!(a.getContigA().equals(b.getContigA()) && a.getContigB().equals(b.getContigB()))) {
             return false;
