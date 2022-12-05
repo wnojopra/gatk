@@ -108,21 +108,21 @@ gvs_subpopulations = [
 def check_filtering(variant):
     # skip any row (with a warning) if no gvsAnnotations exist
     if variant.get("gvsAnnotations") == None: # <-- enum since we need this to be in tandem with the custom annotations header / template
-        print("WARNING: There has been an error in creating custom annotations for AC/AF/AN", variant.get("vid"))
+        logging.warn("WARNING: There has been an error in creating custom annotations for AC/AF/AN", variant.get("vid"))
         return False
     # skip any row (with a warning) if the AC value is 0
     elif variant["gvsAnnotations"].get("AC") == 0:
-        print("WARNING: Its AC is 0 so we are dropping this variant", variant.get("vid"))
+        logging.warn("WARNING: Its AC is 0 so we are dropping this variant", variant.get("vid"))
         return False
     # skip any row (with a warning) if AC, AN or AF is missing
     elif variant["gvsAnnotations"].get("AC") == None:
-        print("WARNING: There has been an error-- there is no AC value---should AN be 0 for this variant?", variant.get("vid"))
+        logging.warn("WARNING: There has been an error-- there is no AC value---should AN be 0 for this variant?", variant.get("vid"))
         return False
     elif variant["gvsAnnotations"].get("AN") == None:
-        print("WARNING: There has been an error-- there is an AC value---but no AN value", variant.get("vid"))
+        logging.warn("WARNING: There has been an error-- there is an AC value---but no AN value", variant.get("vid"))
         return False
     elif variant["gvsAnnotations"].get("AF") == None:
-        print("WARNING: There has been an error-- there is an AC value---but no AF value", variant.get("vid"))
+        logging.warn("WARNING: There has been an error-- there is an AC value---but no AF value", variant.get("vid"))
         return False
     else:
         return True
@@ -274,7 +274,7 @@ def make_annotated_json_row(row_position, row_ref, row_alt, variant_line, transc
     return row
 
 
-def make_positions_json(annotated_json, output_json):
+def make_positions_json(annotated_json, chrom, output_json):
     output_file=gzip.open(output_json, 'w')
 
     if annotated_json.endswith(".gz"):
@@ -283,13 +283,14 @@ def make_positions_json(annotated_json, output_json):
         json_data = open(annotated_json, 'rb')
 
     positions = ijson.items(json_data, 'positions.item', use_float=True)
+    # TODO - gotta be a better way to skip everything but this chromosome.
 
     last_chrom = ""
     for p in positions:
-        chrom=p['chromosome']
-        if (chrom != last_chrom):
-            last_chrom = chrom
-            logging.info(f"Chrom: {chrom}")
+        if (p['chromosome'] != chrom):
+            logging.info(f"Skipping chromosome: {p['chromosome']}")
+            continue
+        logging.info(f"Processing chromosome: {p['chromosome']}")
         position=p['position']
         refAllele=p['refAllele'] # ref_allele
         altAlleles=p['altAlleles'] # this is an array that we need to split into each alt_allele
@@ -332,23 +333,25 @@ def make_positions_json(annotated_json, output_json):
     json_data.close()
 
 
-def make_annotation_jsons(annotated_json, output_json):
+def make_annotation_jsons(annotated_json, chrom, output_json):
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
 
-    logging.info("Making the positions json")
+    logging.info(f"Making the positions json for: {chrom}")
     make_positions_json(annotated_json, output_json)
     logging.info("Done")
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(allow_abbrev=False, description='Create BQ load friendly json for VAT VT table creation')
+    parser = argparse.ArgumentParser(allow_abbrev=False, description='Create Chromosome-specific BQ load friendly json for VAT VT table creation')
     parser.add_argument('--annotated_json', type=str, help='nirvana created annotation json', required=True)
+    parser.add_argument('--chrom', type=str, help='chromosome to read data for', required=True)
     parser.add_argument('--output_vt_json', type=str, help='name of the vt json', required=True)
 
     args = parser.parse_args()
 
     make_annotation_jsons(args.annotated_json,
+                          args.chrom,
                           args.output_vt_json)

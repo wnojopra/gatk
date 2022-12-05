@@ -51,11 +51,14 @@ workflow GvsCreateVATfromVDS {
             custom_annotations_file = StripCustomAnnotationsFromSitesOnlyVCF.output_custom_annotations_file,
     }
 
-    call PrepVtAnnotationJson {
-        input:
-            annotation_json = AnnotateVCF.annotation_json,
-            output_file_suffix = "${input_vcf_name}.json.gz",
-            output_path = output_path,
+    scatter(i in range(length(contig_array)) ) {
+        call PrepVtAnnotationJson {
+            input:
+                annotation_json = AnnotateVCF.annotation_json,
+                contig = contig_array[i],
+                output_file_suffix = "${input_vcf_name}.${contig_array[i]}.json.gz",
+                output_path = output_path,
+        }
     }
 
     call PrepGenesAnnotationJson {
@@ -359,6 +362,7 @@ task AnnotateVCF {
 task PrepVtAnnotationJson {
     input {
         File annotation_json
+        String contig
         String output_file_suffix
         String output_path
     }
@@ -384,6 +388,7 @@ task PrepVtAnnotationJson {
         ## the annotation jsons are split into the specific VAT schema
         python3 /app/create_vt_bqloadjson_from_annotations.py \
         --annotated_json ~{annotation_json} \
+        --chrom ~{contig} \
         --output_vt_json ~{output_vt_json}
 
         gsutil cp ~{output_vt_json} '~{output_vt_gcp_path}'
@@ -392,9 +397,9 @@ task PrepVtAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_01"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_05a"
         memory: "15 GB"
-        preemptible: 3
+        preemptible: 0
         cpu: "1"
         disks: "local-disk 500 HDD"
     }
@@ -439,9 +444,9 @@ task PrepGenesAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_01"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_05a"
         memory: "15 GB"
-        preemptible: 3
+        preemptible: 0
         cpu: "1"
         disks: "local-disk 500 HDD"
     }
@@ -470,7 +475,7 @@ task BigQueryLoadJson {
         String project_id
         String dataset_name
         String output_path
-        Boolean prep_vt_json_done
+        Array[Boolean] prep_vt_json_done
         Boolean prep_genes_json_done
     }
 
