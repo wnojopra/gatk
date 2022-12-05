@@ -285,7 +285,6 @@ def make_positions_json(annotated_json, chrom, output_json):
     positions = ijson.items(json_data, 'positions.item', use_float=True)
     # TODO - gotta be a better way to skip everything but this chromosome.
 
-    last_chrom = ""
     for p in positions:
         if (p['chromosome'] != chrom):
             logging.info(f"Skipping chromosome: {p['chromosome']}")
@@ -340,7 +339,7 @@ def make_annotation_jsons(annotated_json, chrom, output_json):
         datefmt='%Y-%m-%d %H:%M:%S')
 
     logging.info(f"Making the positions json for: {chrom}")
-    make_positions_json(annotated_json, output_json)
+    make_positions_json(annotated_json, chrom, output_json)
     logging.info("Done")
 
 
