@@ -29,6 +29,7 @@ workflow GvsCreateVATfromVDS {
 
     File nirvana_data_directory = "gs://gvs_quickstart_storage/Nirvana/Nirvana-references-2022-10-07.tgz"
 
+    ## Flag A
     ## TODO: where do we need to validate that there are no hemis?
 
     call MakeSubpopulationFilesAndReadSchemaFiles {
@@ -336,6 +337,7 @@ task AnnotateVCF {
     String gene_annotation_json_name_jsi = gene_annotation_json_name + ".jsi"
     String nirvana_location = "/Nirvana/Nirvana.dll"
     String custom_creation_location = "/Nirvana/SAUtils.dll"
+    String jasix_location = "/Nirvana/Jasix.dll"
     String path = "/Cache/GRCh38/Both"
     String path_supplementary_annotations = "/SupplementaryAnnotation/GRCh38"
     String path_reference = "/References/Homo_sapiens.GRCh38.Nirvana.dat"
@@ -386,7 +388,7 @@ task AnnotateVCF {
         echo "Here is stuff"
         ls -l
         echo "Now we try"
-        dotnet  ~{nirvana_location} \
+        dotnet  ~{jasix_location} \
             --in ~{annotation_json_name} \
             --section genes \
             --out ~{gene_annotation_json_name}
