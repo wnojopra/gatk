@@ -29,7 +29,7 @@ workflow GvsCreateVATfromVDS {
 
     File nirvana_data_directory = "gs://gvs_quickstart_storage/Nirvana/Nirvana-references-2022-10-07.tgz"
 
-    ## Flag C
+    ## Flag D
     ## TODO: where do we need to validate that there are no hemis?
 
     call MakeSubpopulationFilesAndReadSchemaFiles {
@@ -177,7 +177,7 @@ task MakeSubpopulationFilesAndReadSchemaFiles {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_11_29"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
         memory: "1 GB"
         preemptible: 3
         cpu: "1"
@@ -222,7 +222,7 @@ task StripCustomAnnotationsFromSitesOnlyVCF {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_11_29a"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
         memory: "7 GiB"
         cpu: "2"
         preemptible: 3
@@ -451,7 +451,7 @@ task PrepVtAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_01"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
         memory: "7 GB"
         preemptible: 3
         cpu: "1"
@@ -498,7 +498,7 @@ task PrepGenesAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg_VS-561_var_store_2022_12_01"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
         memory: "7 GB"
         preemptible: 3
         cpu: "1"
