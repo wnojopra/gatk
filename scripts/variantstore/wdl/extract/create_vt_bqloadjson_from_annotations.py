@@ -282,7 +282,8 @@ def make_positions_json(annotated_json, output_json):
     else:
         json_data = open(annotated_json, 'rb')
 
-    positions = ijson.items(json_data, 'positions.item', use_float=True)
+    positions = ijson.items(json_data, 'item', use_float=True)
+    # TODO - warn / die if not found!
 
     last_chrom = ""
     for p in positions:

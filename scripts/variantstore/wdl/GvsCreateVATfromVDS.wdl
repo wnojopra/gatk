@@ -177,7 +177,7 @@ task MakeSubpopulationFilesAndReadSchemaFiles {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg6_VS-561_var_store_2022_12_08"
         memory: "1 GB"
         preemptible: 3
         cpu: "1"
@@ -222,7 +222,7 @@ task StripCustomAnnotationsFromSitesOnlyVCF {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg6_VS-561_var_store_2022_12_08"
         memory: "7 GiB"
         cpu: "2"
         preemptible: 3
@@ -334,6 +334,7 @@ task AnnotateVCF {
     String annotation_json_name = output_annotated_file_name + ".json.gz"
     String annotation_json_name_jsi = annotation_json_name + ".jsi"
     String gene_annotation_json_name = output_annotated_file_name + ".genes.json.gz"
+    String positions_annotation_json_name = output_annotated_file_name + ".positions.json.gz"
     String nirvana_location = "/Nirvana/Nirvana.dll"
     String custom_creation_location = "/Nirvana/SAUtils.dll"
     String jasix_location = "/Nirvana/Jasix.dll"
@@ -393,6 +394,13 @@ task AnnotateVCF {
             --out ~{gene_annotation_json_name}
         echo "Here is more stuff"
         ls -l
+        echo "Positions Now"
+        dotnet  ~{jasix_location} \
+        --in ~{annotation_json_name} \
+        --section positions \
+        --out ~{positions_annotation_json_name}
+        echo "Here is even more stuff"
+        ls -l
         echo "Now we end"
 
     >>>
@@ -411,6 +419,7 @@ task AnnotateVCF {
         File annotation_json = "~{annotation_json_name}"
         File annotation_json_jsi = "~{annotation_json_name_jsi}"
         File genes_annotation_json = "~{gene_annotation_json_name}"
+        File positions_annotation_json = "~{positions_annotation_json_name}"
         File monitoring_log = "monitoring.log"
     }
 }
@@ -418,6 +427,7 @@ task AnnotateVCF {
 task PrepVtAnnotationJson {
     input {
         File annotation_json
+        File positions_annotation_json
         String output_file_suffix
         String output_path
     }
@@ -442,7 +452,7 @@ task PrepVtAnnotationJson {
 
         ## the annotation jsons are split into the specific VAT schema
         python3 /app/create_vt_bqloadjson_from_annotations.py \
-            --annotated_json ~{annotation_json} \
+            --annotated_json ~{positions_annotation_json} \
             --output_vt_json ~{output_vt_json}
 
         gsutil cp ~{output_vt_json} '~{output_vt_gcp_path}'
@@ -451,7 +461,7 @@ task PrepVtAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg6_VS-561_var_store_2022_12_08"
         memory: "7 GB"
         preemptible: 3
         cpu: "1"
@@ -498,7 +508,7 @@ task PrepGenesAnnotationJson {
     # ------------------------------------------------
     # Runtime settings:
     runtime {
-        docker: "us.gcr.io/broad-dsde-methods/variantstore:VS-561_var_store_2022_12_08"
+        docker: "us.gcr.io/broad-dsde-methods/variantstore:gg6_VS-561_var_store_2022_12_08"
         memory: "7 GB"
         preemptible: 3
         cpu: "1"
