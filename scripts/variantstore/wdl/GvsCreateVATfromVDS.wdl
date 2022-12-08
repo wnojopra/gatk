@@ -29,7 +29,7 @@ workflow GvsCreateVATfromVDS {
 
     File nirvana_data_directory = "gs://gvs_quickstart_storage/Nirvana/Nirvana-references-2022-10-07.tgz"
 
-    ## Flag D
+    ## Flag E
     ## TODO: where do we need to validate that there are no hemis?
 
     call MakeSubpopulationFilesAndReadSchemaFiles {
@@ -95,6 +95,7 @@ workflow GvsCreateVATfromVDS {
         call PrepVtAnnotationJson {
             input:
                 annotation_json = AnnotateVCF.annotation_json,
+                positions_annotation_json = AnnotateVCF.positions_annotation_json,
                 output_file_suffix = "${vcf_filename}.json.gz",
                 output_path = output_path,
         }
