@@ -29,7 +29,7 @@ workflow GvsCreateVATfromVDS {
 
     File nirvana_data_directory = "gs://gvs_quickstart_storage/Nirvana/Nirvana-references-2022-10-07.tgz"
 
-    ## Flag A
+    ## Flag B
     ## TODO: where do we need to validate that there are no hemis?
 
     call MakeSubpopulationFilesAndReadSchemaFiles {
@@ -101,7 +101,7 @@ workflow GvsCreateVATfromVDS {
 
         call PrepGenesAnnotationJson {
             input:
-                annotation_json = AnnotateVCF.annotation_json,
+                genes_annotation_json = AnnotateVCF.genes_annotation_json,
                 output_file_suffix = "${vcf_filename}.json.gz",
                 output_path = output_path,
         }
@@ -390,6 +390,7 @@ task AnnotateVCF {
         echo "Now we try"
         dotnet  ~{jasix_location} \
             --in ~{annotation_json_name} \
+            --index \
             --section genes \
             --out ~{gene_annotation_json_name}
         echo "Here is more stuff"
@@ -470,7 +471,7 @@ task PrepVtAnnotationJson {
 
 task PrepGenesAnnotationJson {
     input {
-        File annotation_json
+        File genes_annotation_json
         String output_file_suffix
         String output_path
     }
@@ -491,7 +492,7 @@ task PrepGenesAnnotationJson {
 
         ## the annotation jsons are split into the specific VAT schema
         python3 /app/create_genes_bqloadjson_from_annotations.py \
-            --annotated_json ~{annotation_json} \
+            --annotated_json ~{genes_annotation_json} \
             --output_genes_json ~{output_genes_json}
 
         gsutil cp ~{output_genes_json} '~{output_genes_gcp_path}'
