@@ -25,7 +25,7 @@ import java.util.List;
  *
  * See src/main/resources/org/broadinstitute/hellbender/tools/walkers/vqsr/scalable/isolation-forest.py for an example implementation.
  */
-public final class PythonSklearnVariantAnnotationsScorer implements VariantAnnotationsScorer, Serializable {
+public final class PythonVariantAnnotationsScorer implements VariantAnnotationsScorer, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,8 +34,8 @@ public final class PythonSklearnVariantAnnotationsScorer implements VariantAnnot
     private final File pythonScriptFile;
     private final File scorerPklFile;
 
-    public PythonSklearnVariantAnnotationsScorer(final File pythonScriptFile,
-                                                 final File scorerPklFile) {
+    public PythonVariantAnnotationsScorer(final File pythonScriptFile,
+                                          final File scorerPklFile) {
         this.pythonScriptFile = pythonScriptFile;
         this.scorerPklFile = scorerPklFile;
     }

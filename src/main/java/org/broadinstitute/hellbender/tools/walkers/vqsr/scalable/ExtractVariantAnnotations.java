@@ -184,9 +184,8 @@ import java.util.stream.Collectors;
  *     1000000 unlabeled (i.e., non-training/calibration) sites, producing the outputs
  *     1) {@code extract.annot.hdf5}, 2) {@code extract.unlabeled.annot.hdf5}, 3) {@code extract.vcf.gz},
  *     and 4) {@code extract.vcf.gz.tbi}. The HDF5 files can then be provided to {@link TrainVariantAnnotationsModel}
- *     to train a model using a positive-negative approach (similar to that used in {@link VariantRecalibrator}).
- *     Note that the {@value MODE_LONG_NAME} arguments are made explicit here, although both SNP and INDEL modes are
- *     selected by default.
+ *     to train a model using a positive-unlabeled approach. Note that the {@value MODE_LONG_NAME} arguments
+ *     are made explicit here, although both SNP and INDEL modes are selected by default.
  *
  * <pre>
  *     gatk ExtractVariantAnnotations \

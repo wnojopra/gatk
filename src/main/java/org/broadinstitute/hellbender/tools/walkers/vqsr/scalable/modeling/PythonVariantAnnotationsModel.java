@@ -29,25 +29,26 @@ import java.util.List;
  *
  * See src/main/resources/org/broadinstitute/hellbender/tools/walkers/vqsr/scalable/isolation-forest.py for an example implementation.
  */
-public final class PythonSklearnVariantAnnotationsModel implements VariantAnnotationsModel {
+public final class PythonVariantAnnotationsModel implements VariantAnnotationsModel {
 
     private final File pythonScriptFile;
     private final File hyperparametersJSONFile;
 
-    public PythonSklearnVariantAnnotationsModel(final File pythonScriptFile,
-                                                final File hyperparametersJSONFile) {
+    public PythonVariantAnnotationsModel(final File pythonScriptFile,
+                                         final File hyperparametersJSONFile) {
         this.pythonScriptFile = pythonScriptFile;
         this.hyperparametersJSONFile = hyperparametersJSONFile;
     }
 
     @Override
     public void trainAndSerialize(final File trainingAnnotationsFile,
+                                  final File unlabeledAnnotationsFile,
                                   final String outputPrefix) {
         final PythonScriptExecutor executor = new PythonScriptExecutor(true);
         final ProcessOutput pythonProcessOutput = executor.executeScriptAndGetOutput(
                 pythonScriptFile.getAbsolutePath(),
                 null,
-                composePythonArguments(trainingAnnotationsFile, hyperparametersJSONFile, outputPrefix));
+                composePythonArguments(trainingAnnotationsFile, unlabeledAnnotationsFile, hyperparametersJSONFile, outputPrefix));
 
         if (pythonProcessOutput.getExitValue() != 0) {
             throw executor.getScriptException(executor.getExceptionMessageFromScriptError(pythonProcessOutput));
@@ -55,13 +56,18 @@ public final class PythonSklearnVariantAnnotationsModel implements VariantAnnota
     }
 
     private static List<String> composePythonArguments(final File annotationsFile,
+                                                       final File unlabeledAnnotationsFile,
                                                        final File hyperparametersJSONFile,
                                                        final String outputPrefix) {
         try {
-            return new ArrayList<>(Arrays.asList(
+            final List<String> arguments = new ArrayList<>(Arrays.asList(
                     "--annotations_file=" + annotationsFile.getCanonicalPath(),
                     "--hyperparameters_json_file=" + hyperparametersJSONFile.getCanonicalPath(),
                     "--output_prefix=" + outputPrefix));
+            if (unlabeledAnnotationsFile != null) {
+                arguments.add("--unlabeled_annotations_file=" + annotationsFile.getCanonicalPath());
+            }
+            return arguments;
         } catch (final IOException e) {
             throw new UserException.BadInput(String.format("Encountered exception resolving canonical file paths: %s", e));
         }
