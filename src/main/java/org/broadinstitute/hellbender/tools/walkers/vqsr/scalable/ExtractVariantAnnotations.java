@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  * <ul>
  *     <li>
  *         Input VCF file. Site-level annotations will be extracted from the contained variants (or alleles, 
- *         if the {@value USE_ALLELE_SPECIFIC_ANNOTATIONS_LONG_NAME} argument is specified).
+ *         if at least one allele-specific annotation with {@code Number=A} is specified).
  *     </li>
  *     <li>
  *         Annotations to extract.
@@ -128,7 +128,7 @@ import java.util.stream.Collectors;
  *         <p>
  *             Here, each chunk is a double matrix, with dimensions given by (number of sites in the chunk) x (number of annotations).
  *             See the methods {@link HDF5Utils#writeChunkedDoubleMatrix} and {@link HDF5Utils#writeIntervals} for additional details.
- *             If {@value USE_ALLELE_SPECIFIC_ANNOTATIONS_LONG_NAME} is specified, each record corresponds to an individual allele;
+ *             In allele-specific mode (i.e., when allele-specific annotations are requested), each record corresponds to an individual allele;
  *             otherwise, each record corresponds to a variant site, which may contain multiple alleles.
  *             Storage of alleles can be omitted using the {@value OMIT_ALLELES_IN_HDF5_LONG_NAME} argument, which will reduce
  *             the size of the file. This file will only be produced if resources are provided and the number of extracted
@@ -251,8 +251,7 @@ public final class ExtractVariantAnnotations extends LabeledVariantAnnotationsWa
                     "Choice of this number should be guided by considerations for training the negative model in " +
                     "TrainVariantAnnotationsModel; users may wish to choose a number that is comparable to the " +
                     "expected size of the labeled training set or that is compatible with available memory resources. " +
-                    "Note that in allele-specific mode (--" + LabeledVariantAnnotationsWalker.USE_ALLELE_SPECIFIC_ANNOTATIONS_LONG_NAME +
-                    " true), this argument limits the number of variant records, rather than the number of alleles.",
+                    "Note that in allele-specific mode, this argument limits the number of variant records, rather than the number of alleles.",
             minValue = 0)
     private int maximumNumberOfUnlabeledVariants = 0;
 

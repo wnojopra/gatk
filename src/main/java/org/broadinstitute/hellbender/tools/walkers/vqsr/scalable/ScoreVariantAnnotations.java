@@ -78,7 +78,7 @@ import java.util.stream.IntStream;
  * <ul>
  *     <li>
  *         Input VCF file. Site-level annotations will be extracted from the contained variants (or alleles,
- *         if the {@value USE_ALLELE_SPECIFIC_ANNOTATIONS_LONG_NAME} argument is specified).
+ *         if at least one allele-specific annotation with {@code Number=A} is specified).
  *     </li>
  *     <li>
  *         Annotations to use for scoring. These should be identical to those used in the {@link ExtractVariantAnnotations}
@@ -146,7 +146,7 @@ import java.util.stream.IntStream;
  *             score threshold).
  *         </p>
  *         <p>
- *             If {@value USE_ALLELE_SPECIFIC_ANNOTATIONS_LONG_NAME} is true, the score, SNP flag, calibration sensitivity,
+ *             In allele-specific mode (i.e., when allele-specific annotations are requested), the score, SNP flag, calibration sensitivity,
  *             and filter appropriate for the highest scoring allele are used; however, the resource labels for all alleles
  *             are applied.
  *         </p>
