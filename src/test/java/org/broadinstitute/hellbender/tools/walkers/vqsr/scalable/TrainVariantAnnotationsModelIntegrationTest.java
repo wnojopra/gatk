@@ -110,6 +110,8 @@ public final class TrainVariantAnnotationsModelIntegrationTest extends CommandLi
                 Arrays.asList(
                         Pair.of("snp", ADD_SNP_MODE),
                         Pair.of("snpIndel", ADD_SNP_MODE.andThen(ADD_INDEL_MODE))),
+                Collections.singletonList(
+                        Pair.of("posOnly", Function.identity())),
                 Arrays.asList(
                         Pair.of("IF", ab -> ADD_MODEL_BACKEND.apply(ab, VariantAnnotationsModelBackend.PYTHON_IFOREST)),
                         Pair.of("IFDifferentSeed", ADD_ISOLATION_FOREST_HYPERPARAMETERS_JSON
@@ -258,27 +260,6 @@ public final class TrainVariantAnnotationsModelIntegrationTest extends CommandLi
                 outputPrefixSNPPlusIndel + ".snp" + TrainVariantAnnotationsModel.CALIBRATION_SCORES_HDF5_SUFFIX));
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testUnlabeledAnnotationsSpecifiedWithoutCalibrationSensitivityThreshold() {
-        final File outputDir = createTempDir("train");
-        final String outputPrefix = String.format("%s/test", outputDir);
-        final ArgumentsBuilder argsBuilder = BASE_ARGUMENTS_BUILDER_SUPPLIER.get();
-        argsBuilder.addOutput(outputPrefix);
-        final String extractTag = "extract.nonAS.snpIndel.posUn";
-        final File positiveAnnotationsHDF5 = new File(INPUT_FROM_EXTRACT_EXPECTED_TEST_FILES_DIR,
-                extractTag + LabeledVariantAnnotationsWalker.ANNOTATIONS_HDF5_SUFFIX);
-        final Function<ArgumentsBuilder, ArgumentsBuilder> addPositiveAnnotations = ab ->
-                ADD_ANNOTATIONS_HDF5.apply(ab, positiveAnnotationsHDF5);
-        final File unlabeledAnnotationsHDF5 = new File(INPUT_FROM_EXTRACT_EXPECTED_TEST_FILES_DIR,
-                extractTag + ExtractVariantAnnotations.UNLABELED_TAG + LabeledVariantAnnotationsWalker.ANNOTATIONS_HDF5_SUFFIX);
-        final Function<ArgumentsBuilder, ArgumentsBuilder> addUnlabeledAnnotations = ab ->
-                ADD_UNLABELED_ANNOTATIONS_HDF5.apply(ab, unlabeledAnnotationsHDF5);
-        addPositiveAnnotations
-                .andThen(addUnlabeledAnnotations)
-                .apply(argsBuilder);
-        runCommandLine(argsBuilder);
-    }
-
     @Test(expectedExceptions = IllegalArgumentException.class) // python environment is required to run tool
     public void testPositiveAndUnlabeledAnnotationNamesAreNotIdentical() {
         final File outputDir = createTempDir("train");
@@ -316,7 +297,8 @@ public final class TrainVariantAnnotationsModelIntegrationTest extends CommandLi
         runCommandLine(argsBuilder);
     }
 
-    @Test(expectedExceptions = UserException.BadInput.class, groups = {"python"}) // python environment is required to run tool
+    // we will enable this once a positive-unlabeled backend is implemented
+    @Test(expectedExceptions = UserException.BadInput.class, groups = {"python"}, enabled = false) // python environment is required to run tool
     public void testUnlabeledAnnotationsOfSpecifiedVariantTypesNotPresent() {
         final File outputDir = createTempDir("train");
         final String outputPrefix = String.format("%s/test", outputDir);

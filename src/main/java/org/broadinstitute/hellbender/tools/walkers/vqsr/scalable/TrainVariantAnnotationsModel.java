@@ -529,7 +529,7 @@ public final class TrainVariantAnnotationsModel extends CommandLineProgram {
         if (!completelyMissingAnnotationNames.isEmpty()) {
             throw new UserException.BadInput(
                     String.format("All values of the following annotations are missing in the training data for the %s model: %s. " +
-                                    "Consider repeating the extraction step without specifying these annotations. " +
+                                    "Consider repeating the extraction step without specifying these annotations. ",
                             outputPrefix + outputPrefixTag, completelyMissingAnnotationNames));
         }
     }
