@@ -29,8 +29,9 @@ workflow JointVcfFiltering {
         String resource_args
 
         String? model_backend
-        File? python_script
+        File? training_python_script
         File? hyperparameters_json
+        File? scoring_python_script
 
         String? extract_extra_args
         String? train_extra_args
@@ -76,7 +77,7 @@ workflow JointVcfFiltering {
             annotations_hdf5 = ExtractVariantAnnotations.annotations_hdf5,
             unlabeled_annotations_hdf5 = ExtractVariantAnnotations.unlabeled_annotations_hdf5,
             model_backend = model_backend,
-            python_script = python_script,
+            python_script = training_python_script,
             hyperparameters_json = hyperparameters_json,
             output_prefix = output_prefix,
             extra_args = train_extra_args,
@@ -97,6 +98,8 @@ workflow JointVcfFiltering {
                 extracted_vcf_idx = ExtractVariantAnnotations.extracted_vcf_idx,
                 model_prefix = output_prefix,
                 model_files = TrainVariantAnnotationsModel.model_files,
+                model_backend = model_backend,
+                python_script = scoring_python_script,
                 extra_args = score_extra_args,
                 gatk_docker = gatk_docker,
                 gatk_override = gatk_override,
@@ -227,6 +230,8 @@ task ScoreVariantAnnotations {
         File extracted_vcf_idx
         String model_prefix
         Array[File] model_files
+        String? model_backend
+        File? python_script
         String? extra_args
 
         String gatk_docker
@@ -258,6 +263,8 @@ task ScoreVariantAnnotations {
                 ~{resource_args} \
                 --resource:extracted,extracted=true ~{extracted_vcf} \
                 --model-prefix model-files/~{model_prefix}.train \
+                ~{"--model-backend " + model_backend} \
+                ~{"--python-script " + python_script} \
                 ~{extra_args}
     }
 
