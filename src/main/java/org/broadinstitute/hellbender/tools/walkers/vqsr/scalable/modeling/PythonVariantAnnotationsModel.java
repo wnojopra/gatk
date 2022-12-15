@@ -65,7 +65,7 @@ public final class PythonVariantAnnotationsModel implements VariantAnnotationsMo
                     "--hyperparameters_json_file=" + hyperparametersJSONFile.getCanonicalPath(),
                     "--output_prefix=" + outputPrefix));
             if (unlabeledAnnotationsFile != null) {
-                arguments.add("--unlabeled_annotations_file=" + annotationsFile.getCanonicalPath());
+                arguments.add("--unlabeled_annotations_file=" + unlabeledAnnotationsFile.getCanonicalPath());
             }
             return arguments;
         } catch (final IOException e) {
