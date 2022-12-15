@@ -248,7 +248,7 @@ public final class ExtractVariantAnnotations extends LabeledVariantAnnotationsWa
             doc = "Maximum number of unlabeled variants to extract. " +
                     "If greater than zero, reservoir sampling will be used to randomly sample this number " +
                     "of sites from input sites that are not present in the specified resources. " +
-                    "Choice of this number should be guided by considerations for training the negative model in " +
+                    "Choice of this number should be guided by considerations for training the model in " +
                     "TrainVariantAnnotationsModel; users may wish to choose a number that is comparable to the " +
                     "expected size of the labeled training set or that is compatible with available memory resources. " +
                     "Note that in allele-specific mode, this argument limits the number of variant records, rather than the number of alleles.",
