@@ -7,7 +7,6 @@ import htsjdk.samtools.util.CoordMath;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
-import htsjdk.variant.variantcontext.StructuralVariantType;
 import htsjdk.variant.vcf.VCFConstants;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
@@ -44,7 +43,7 @@ public class SVCallRecord implements SVLocatable {
     private final String contigB;
     private final int positionB;
     private final Boolean strandB;
-    private final StructuralVariantType type;
+    private final GATKSVVCFConstants.StructuralVariantAnnotationType type;
     private final Integer length;
     private final List<String> algorithms;
     private final List<Allele> alleles;
@@ -60,7 +59,7 @@ public class SVCallRecord implements SVLocatable {
                         final String contigB,
                         final int positionB,
                         final Boolean strandB,
-                        final StructuralVariantType type,
+                        final GATKSVVCFConstants.StructuralVariantAnnotationType type,
                         final Integer length,
                         final List<String> algorithms,
                         final List<Allele> alleles,
@@ -78,7 +77,7 @@ public class SVCallRecord implements SVLocatable {
                            final String contigB,
                            final int positionB,
                            final Boolean strandB,
-                           final StructuralVariantType type,
+                           final GATKSVVCFConstants.StructuralVariantAnnotationType type,
                            final Integer length,
                            final List<String> algorithms,
                            final List<Allele> alleles,
@@ -117,7 +116,7 @@ public class SVCallRecord implements SVLocatable {
                         final String id,
                         final Boolean strandA,
                         final Boolean strandB,
-                        final StructuralVariantType type,
+                        final GATKSVVCFConstants.StructuralVariantAnnotationType type,
                         final Integer length,
                         final List<String> algorithms,
                         final List<Allele> alleles,
@@ -170,12 +169,12 @@ public class SVCallRecord implements SVLocatable {
      * @param inputLength assumed length, may be null
      * @return variant length, may be null
      */
-    private static Integer inferLength(final StructuralVariantType type,
+    private static Integer inferLength(final GATKSVVCFConstants.StructuralVariantAnnotationType type,
                                        final int positionA,
                                        final int positionB,
                                        final Integer inputLength) {
-        if (type.equals(StructuralVariantType.CNV) || type.equals(StructuralVariantType.DEL)
-                || type.equals(StructuralVariantType.DUP) || type.equals(StructuralVariantType.INV)) {
+        if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CNV) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DEL)
+                || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DUP) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INV)) {
             // Intrachromosomal classes
             final int length = CoordMath.getLength(positionA, positionB);
             if (inputLength != null) {
@@ -183,8 +182,10 @@ public class SVCallRecord implements SVLocatable {
             }
             return length;
         } else {
-            Utils.validate(type.equals(StructuralVariantType.INS) || inputLength == null,
-                    "Input length should be null for type " + type.name() + " but found " + inputLength);
+            if ((type == GATKSVVCFConstants.StructuralVariantAnnotationType.BND
+                    || type == GATKSVVCFConstants.StructuralVariantAnnotationType.CTX) && inputLength != null) {
+                throw new IllegalArgumentException("Input length should be null for type " + type.name() + " but found " + inputLength);
+            }
             return inputLength;
         }
     }
@@ -198,13 +199,13 @@ public class SVCallRecord implements SVLocatable {
      * @param inputStrandB assumed second strand, may be null
      * @return pair containing (first strand, second strand), which may contain null values
      */
-    private static Pair<Boolean, Boolean> inferStrands(final StructuralVariantType type,
+    private static Pair<Boolean, Boolean> inferStrands(final GATKSVVCFConstants.StructuralVariantAnnotationType type,
                                                        final Boolean inputStrandA,
                                                        final Boolean inputStrandB) {
-        if (type.equals(StructuralVariantType.CNV)) {
+        if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CNV)) {
             Utils.validateArg(inputStrandA == null && inputStrandB == null, "Attempted to create CNV with non-null strands");
             return Pair.of(null, null);
-        } else if (type.equals(StructuralVariantType.DEL) || type.equals(StructuralVariantType.INS)) {
+        } else if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DEL) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INS)) {
             if (inputStrandA != null) {
                 Utils.validateArg(inputStrandA.booleanValue() == true, "Attempted to create DEL/INS with negative first strand");
             }
@@ -212,7 +213,7 @@ public class SVCallRecord implements SVLocatable {
                 Utils.validateArg(inputStrandB.booleanValue() == false, "Attempted to create DEL/INS with positive second strand");
             }
             return Pair.of(Boolean.TRUE, Boolean.FALSE);
-        } else if (type.equals(StructuralVariantType.DUP)) {
+        } else if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DUP)) {
             if (inputStrandA != null) {
                 Utils.validateArg(inputStrandA.booleanValue() == false, "Attempted to create DUP with positive first strand");
             }
@@ -221,11 +222,8 @@ public class SVCallRecord implements SVLocatable {
             }
             return Pair.of(Boolean.FALSE, Boolean.TRUE);
         } else {
-            if (type.equals(StructuralVariantType.INV)) {
-                if (inputStrandA == null && inputStrandB == null) {
-                    return Pair.of(Boolean.TRUE, Boolean.TRUE);
-                }
-                Utils.validateArg(inputStrandA.equals(inputStrandB), "Inversions must have matching strands but found " +
+            if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INV)) {
+                Utils.validateArg(Objects.equals(inputStrandA, inputStrandB), "Inversions must have matching strands but found " +
                         inputStrandA + " / " + inputStrandB);
             }
             return Pair.of(inputStrandA, inputStrandB);
@@ -303,7 +301,9 @@ public class SVCallRecord implements SVLocatable {
     }
 
     public boolean isSimpleCNV() {
-        return type == StructuralVariantType.DEL || type == StructuralVariantType.DUP || type == StructuralVariantType.CNV;
+        return type == GATKSVVCFConstants.StructuralVariantAnnotationType.DEL
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.DUP
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.CNV;
     }
 
     public boolean nullStrands() {
@@ -347,7 +347,7 @@ public class SVCallRecord implements SVLocatable {
     }
 
     @Override
-    public StructuralVariantType getType() {
+    public GATKSVVCFConstants.StructuralVariantAnnotationType getType() {
         return type;
     }
 

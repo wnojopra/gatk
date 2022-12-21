@@ -84,7 +84,18 @@ public class GATKSVVariantContextUtils {
     /**
      * Determines whether a given SV type represents a CNV.
      */
+    public static boolean isCnvType(final GATKSVVCFConstants.StructuralVariantAnnotationType type) {
+        return type == GATKSVVCFConstants.StructuralVariantAnnotationType.DEL
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.DUP
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.CNV;
+    }
+
+    /**
+     * Determines whether a given SV type represents a CNV.
+     */
     public static boolean isCnvType(final StructuralVariantType type) {
-        return type == StructuralVariantType.DEL || type == StructuralVariantType.DUP || type == StructuralVariantType.CNV;
+        return type == StructuralVariantType.DEL
+                || type == StructuralVariantType.DUP
+                || type == StructuralVariantType.CNV;
     }
 }

@@ -377,7 +377,7 @@ public class SVClusterIntegrationTest extends CommandLineProgramTest {
             if (variant.getContig().equals("chr20") && variant.getStart() == 28654436) {
                 expectedRecordsFound++;
                 Assert.assertEquals(variant.getEnd(), 28719092);
-                Assert.assertFalse(variant.hasAttribute(GATKSVVCFConstants.SVLEN));
+                Assert.assertTrue(variant.hasAttribute(GATKSVVCFConstants.SVLEN));
                 final List<String> algorithms = variant.getAttributeAsStringList(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, null);
                 Assert.assertEquals(algorithms.size(), 1);
                 Assert.assertTrue(algorithms.contains("manta"));
@@ -454,11 +454,11 @@ public class SVClusterIntegrationTest extends CommandLineProgramTest {
                 final int nonRefGenotypeCount = (int) variant.getGenotypes().stream().filter(g -> SVCallRecordUtils.isAltGenotype(g)).count();
                 Assert.assertEquals(nonRefGenotypeCount, 71);
                 final int alleleCount = (int) variant.getGenotypes().stream().flatMap(g -> g.getAlleles().stream()).filter(SVCallRecordUtils::isAltAllele).count();
-                Assert.assertEquals(alleleCount, 87);
+                Assert.assertEquals(alleleCount, 94);
                 final Genotype g = variant.getGenotype("HG00129");
-                Assert.assertTrue(g.isHet());
+                Assert.assertTrue(g.isHomVar());
                 Assert.assertEquals(VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT, -1), 2);
-                Assert.assertEquals(VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.COPY_NUMBER_FORMAT, -1), 1);
+                Assert.assertEquals(VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.COPY_NUMBER_FORMAT, -1), 0);
             }
         }
         Assert.assertEquals(expectedRecordsFound, 1);
@@ -515,7 +515,7 @@ public class SVClusterIntegrationTest extends CommandLineProgramTest {
                 Assert.assertEquals(variant.getStructuralVariantType(), StructuralVariantType.DUP);
                 for (final Genotype g : variant.getGenotypes()) {
                     if (g.getSampleName().equals("HG00096")) {
-                        Assert.assertTrue(g.isHomVar());
+                        Assert.assertTrue(g.isNoCall());
                         Assert.assertEquals(g.getAlleles().size(), 1);
                         Assert.assertEquals(VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT, -1), 1);
                         Assert.assertEquals(VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.COPY_NUMBER_FORMAT, -1), 3);

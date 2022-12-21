@@ -58,7 +58,6 @@ public class SVConcordanceIntegrationTest extends CommandLineProgramTest {
                 .add(SVClusterEngineArgumentsCollection.PESR_SAMPLE_OVERLAP_FRACTION_NAME, 0)
                 .add(SVClusterEngineArgumentsCollection.PESR_INTERVAL_OVERLAP_FRACTION_NAME, 0.1)
                 .add(SVClusterEngineArgumentsCollection.PESR_BREAKEND_WINDOW_NAME, 500)
-                .add(SVConcordance.BIALLELIC_DUPLICATIONS_LONG_NAME, true)
                 .add(AbstractConcordanceWalker.TRUTH_VARIANTS_LONG_NAME, truthVcfPath)
                 .add(AbstractConcordanceWalker.EVAL_VARIANTS_SHORT_NAME, evalVcfPath);
 
@@ -78,9 +77,9 @@ public class SVConcordanceIntegrationTest extends CommandLineProgramTest {
         final SVConcordanceAnnotator annotator = new SVConcordanceAnnotator(false);
 
         final List<SVCallRecord> inputEvalVariants = VariantContextTestUtils.readEntireVCFIntoMemory(evalVcfPath).getValue()
-                .stream().map(SVCallRecordUtils::create).map(r -> SVCallRecordUtils.convertToBiallelicDupGenotypes(r, null)).collect(Collectors.toList());
+                .stream().map(SVCallRecordUtils::create).collect(Collectors.toList());
         final List<SVCallRecord> inputTruthVariants = VariantContextTestUtils.readEntireVCFIntoMemory(truthVcfPath).getValue()
-                .stream().map(SVCallRecordUtils::create).map(r -> SVCallRecordUtils.convertToBiallelicDupGenotypes(r, null)).collect(Collectors.toList());
+                .stream().map(SVCallRecordUtils::create).collect(Collectors.toList());
 
         final ClosestSVFinder finder = new ClosestSVFinder(linkage, annotator::annotate, dictionary);
         final List<SVCallRecord> expectedRecords = new ArrayList<>(inputEvalVariants.size());
@@ -130,18 +129,14 @@ public class SVConcordanceIntegrationTest extends CommandLineProgramTest {
             } else if (outputVariant.getID().equals("ref_panel_1kg.chr22.final_cleanup_DEL_chr22_140")) {
                 checkVariant(outputVariant, expectedVariant, "ref_panel_1kg_raw_0000184c",
                         0.9230769230769231, 0.122, checkedVariantsSet);
-            } else if (outputVariant.getID().equals("ref_panel_1kg.chr22.final_cleanup_DUP_chr22_152")) {
-                checkVariant(outputVariant, expectedVariant, "ref_panel_1kg_raw_00002321",
-                        0.717948717948718, 0.256, checkedVariantsSet);
             } else if (outputVariant.getID().equals("ref_panel_1kg.chr22.final_cleanup_INS_chr22_100")) {
                 checkVariant(outputVariant, expectedVariant, "ref_panel_1kg_raw_00001ba0",
                         0.9871794871794872, 0.077, checkedVariantsSet);
             }
         }
-        Assert.assertEquals(checkedVariantsSet.size(), 4);
+        Assert.assertEquals(checkedVariantsSet.size(), 3);
         Assert.assertTrue(checkedVariantsSet.contains("ref_panel_1kg.chr22.final_cleanup_DEL_chr22_1"));
         Assert.assertTrue(checkedVariantsSet.contains("ref_panel_1kg.chr22.final_cleanup_DEL_chr22_140"));
-        Assert.assertTrue(checkedVariantsSet.contains("ref_panel_1kg.chr22.final_cleanup_DUP_chr22_152"));
         Assert.assertTrue(checkedVariantsSet.contains("ref_panel_1kg.chr22.final_cleanup_INS_chr22_100"));
     }
 

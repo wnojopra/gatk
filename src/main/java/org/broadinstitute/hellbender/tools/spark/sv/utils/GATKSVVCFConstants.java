@@ -149,6 +149,18 @@ public final class GATKSVVCFConstants {
     public static final String NEAREST_TSS = "PREDICTED_NEAREST_TSS";
     public static final String TSS_DUP = "PREDICTED_TSS_DUP";
 
+    // SVTYPE classes
+    public enum StructuralVariantAnnotationType {
+        DEL,
+        DUP,
+        INS,
+        INV,
+        CPX,
+        BND,
+        CTX,
+        CNV
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }

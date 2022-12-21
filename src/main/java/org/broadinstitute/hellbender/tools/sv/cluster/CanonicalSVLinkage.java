@@ -1,7 +1,7 @@
 package org.broadinstitute.hellbender.tools.sv.cluster;
 
 import htsjdk.samtools.SAMSequenceDictionary;
-import htsjdk.variant.variantcontext.StructuralVariantType;
+import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
 import org.broadinstitute.hellbender.tools.sv.SVCallRecord;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -104,14 +104,14 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
      * Tests if SVTYPEs match, allowing for DEL/DUP/CNVs to match in some cases.
      */
     protected boolean typesMatch(final SVCallRecord a, final SVCallRecord b) {
-        final StructuralVariantType aType = a.getType();
-        final StructuralVariantType bType = b.getType();
+        final GATKSVVCFConstants.StructuralVariantAnnotationType aType = a.getType();
+        final GATKSVVCFConstants.StructuralVariantAnnotationType bType = b.getType();
         if (aType == bType) {
             return true;
         }
         // Allow CNVs to cluster with both DELs and DUPs, but only allow DEL/DUP clustering if enabled
         if (a.isSimpleCNV() && b.isSimpleCNV()) {
-            if (clusterDelWithDup || (aType == StructuralVariantType.CNV || bType == StructuralVariantType.CNV)) {
+            if (clusterDelWithDup || (aType == GATKSVVCFConstants.StructuralVariantAnnotationType.CNV || bType == GATKSVVCFConstants.StructuralVariantAnnotationType.CNV)) {
                 return true;
             }
         }
@@ -174,9 +174,11 @@ public class CanonicalSVLinkage<T extends SVCallRecord> extends SVClusterLinkage
      */
     private static int getLengthForOverlap(final SVCallRecord record) {
         Utils.validate(record.isIntrachromosomal(), "Record even must be intra-chromosomal");
-        if (record.getType() == StructuralVariantType.INS) {
+        if (record.getType() == GATKSVVCFConstants.StructuralVariantAnnotationType.INS
+                || record.getType() == GATKSVVCFConstants.StructuralVariantAnnotationType.CPX) {
             return record.getLength() == null ? INSERTION_ASSUMED_LENGTH_FOR_OVERLAP : Math.max(record.getLength(), 1);
-        } else if (record.getType() == StructuralVariantType.BND) {
+        } else if (record.getType() == GATKSVVCFConstants.StructuralVariantAnnotationType.BND
+                || record.getType() == GATKSVVCFConstants.StructuralVariantAnnotationType.CTX) {
             return record.getPositionB() - record.getPositionA() + 1;
         } else {
             // TODO lengths less than 1 shouldn't be valid

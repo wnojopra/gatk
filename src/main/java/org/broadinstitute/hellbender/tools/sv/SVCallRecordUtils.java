@@ -5,15 +5,12 @@ import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.util.Locatable;
 import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.vcf.VCFConstants;
-import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.spark.sv.utils.GATKSVVCFConstants;
-import org.broadinstitute.hellbender.tools.sv.cluster.CanonicalSVCollapser;
 import org.broadinstitute.hellbender.tools.sv.cluster.PloidyTable;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
-import org.broadinstitute.hellbender.utils.variant.VariantContextGetters;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +20,9 @@ import static org.broadinstitute.hellbender.tools.sv.SVCallRecord.UNDEFINED_LENG
 
 public final class SVCallRecordUtils {
 
+    private static final Set<String> VALID_TYPES = new HashSet<>(Arrays.asList(GATKSVVCFConstants.StructuralVariantAnnotationType.values()).stream()
+            .map(GATKSVVCFConstants.StructuralVariantAnnotationType::name).collect(Collectors.toList()));
+
     /**
      * Create a builder for a variant from an {@link SVCallRecord} for VCF interoperability
      * @param record variant to convert
@@ -31,13 +31,16 @@ public final class SVCallRecordUtils {
     public static VariantContextBuilder getVariantBuilder(final SVCallRecord record) {
         Utils.nonNull(record);
         final int end;
-        if (record.getType().equals(StructuralVariantType.INS) || record.getType().equals(StructuralVariantType.BND)) {
+        final GATKSVVCFConstants.StructuralVariantAnnotationType type = record.getType();
+        if (type == GATKSVVCFConstants.StructuralVariantAnnotationType.INS
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.BND
+                || type == GATKSVVCFConstants.StructuralVariantAnnotationType.CTX) {
             end = record.getPositionA();
         } else {
             end = record.getPositionB();
         }
         final int end2;
-        if (record.getType().equals(StructuralVariantType.INS)) {
+        if (record.getType().equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INS)) {
             end2 = record.getPositionA();
         } else {
             end2 = record.getPositionB();
@@ -57,20 +60,21 @@ public final class SVCallRecordUtils {
 
         final VariantContextBuilder builder = new VariantContextBuilder(record.getId(), record.getContigA(), record.getPositionA(),
                 end, alleles);
-        final StructuralVariantType svtype = record.getType();
+        final GATKSVVCFConstants.StructuralVariantAnnotationType svtype = record.getType();
         builder.id(record.getId());
         builder.attributes(record.getAttributes());
         builder.attribute(VCFConstants.END_KEY, end);
         builder.attribute(GATKSVVCFConstants.SVTYPE, svtype);
         builder.attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, record.getAlgorithms());
-        if (svtype.equals(StructuralVariantType.BND)) {
+        if (svtype.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.BND)
+                || svtype.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CTX)) {
             builder.attribute(GATKSVVCFConstants.CONTIG2_ATTRIBUTE, record.getContigB());
             builder.attribute(GATKSVVCFConstants.END2_ATTRIBUTE, end2);
         }
-        if (svtype.equals(StructuralVariantType.INS)) {
-            builder.attribute(GATKSVVCFConstants.SVLEN, record.getLength());
-        }
-        if (svtype.equals(StructuralVariantType.BND) || svtype.equals(StructuralVariantType.INV)) {
+        builder.attribute(GATKSVVCFConstants.SVLEN, record.getLength());
+        if ((svtype.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.BND)
+                || svtype.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INV))
+                && record.getStrandA() != null && record.getStrandB() != null) {
             builder.attribute(GATKSVVCFConstants.STRANDS_ATTRIBUTE, getStrandString(record));
         }
         final GenotypesContext genotypes = GenotypesContext.create(record.getGenotypes().size());
@@ -127,10 +131,8 @@ public final class SVCallRecordUtils {
             genotypeBuilder.attribute(GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT, ploidy);
             if (isCNV) {
                 genotypeBuilder.attribute(GATKSVVCFConstants.COPY_NUMBER_FORMAT, ploidy);
-                genotypeBuilder.alleles(CanonicalSVCollapser.getCNVGenotypeAllelesFromCopyNumber(altAlleles, refAllele, ploidy, ploidy, false));
-            } else {
-                genotypeBuilder.alleles(Collections.nCopies(ploidy, refAlleleDefault ? refAllele : Allele.NO_CALL));
             }
+            genotypeBuilder.alleles(Collections.nCopies(ploidy, refAlleleDefault ? refAllele : Allele.NO_CALL));
             newGenotypes.add(genotypeBuilder.make());
         }
         return GenotypesContext.create(newGenotypes);
@@ -256,15 +258,15 @@ public final class SVCallRecordUtils {
      * @return stream of BND records pair, or the original record if not an INV
      */
     public static Stream<SVCallRecord> convertInversionsToBreakends(final SVCallRecord record, final SAMSequenceDictionary dictionary) {
-        if (!record.getType().equals(StructuralVariantType.INV)) {
+        if (!record.getType().equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INV)) {
             return Stream.of(record);
         }
         Utils.validateArg(record.isIntrachromosomal(), "Inversion " + record.getId() + " is not intrachromosomal");
         final SVCallRecord positiveBreakend = new SVCallRecord(record.getId(), record.getContigA(),
-                record.getPositionA(), true, record.getContigB(), record.getPositionB(), true, StructuralVariantType.BND, null,
+                record.getPositionA(), true, record.getContigB(), record.getPositionB(), true, GATKSVVCFConstants.StructuralVariantAnnotationType.BND, null,
                 record.getAlgorithms(), record.getAlleles(), record.getGenotypes(), record.getAttributes(), dictionary);
         final SVCallRecord negativeBreakend = new SVCallRecord(record.getId(), record.getContigA(),
-                record.getPositionA(), false, record.getContigB(), record.getPositionB(), false, StructuralVariantType.BND, null,
+                record.getPositionA(), false, record.getContigB(), record.getPositionB(), false, GATKSVVCFConstants.StructuralVariantAnnotationType.BND, null,
                 record.getAlgorithms(), record.getAlleles(), record.getGenotypes(), record.getAttributes(), dictionary);
         return Stream.of(positiveBreakend, negativeBreakend);
     }
@@ -289,12 +291,12 @@ public final class SVCallRecordUtils {
         final String contigA = variant.getContig();
         final int positionA = variant.getStart();
 
-        final StructuralVariantType type = inferStructuralVariantType(variant);
+        final GATKSVVCFConstants.StructuralVariantAnnotationType type = inferStructuralVariantType(variant);
         final List<String> algorithms = getAlgorithms(variant);
 
         final String strands;
-        if (type.equals(StructuralVariantType.DEL) || type.equals(StructuralVariantType.INS) ||
-                type.equals(StructuralVariantType.CNV) || type.equals(StructuralVariantType.DUP)) {
+        if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DEL) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INS) ||
+                type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CNV) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DUP)) {
             // SVCallRecord class can resolve these
             strands = null;
         } else {
@@ -304,9 +306,9 @@ public final class SVCallRecordUtils {
         final Boolean strand2 = strands == null ? null : strands.endsWith(SVCallRecord.STRAND_PLUS);
 
         final Integer length;
-        if (type.equals(StructuralVariantType.BND) || type.equals(StructuralVariantType.DEL) ||
-                type.equals(StructuralVariantType.DUP) || type.equals(StructuralVariantType.CNV) ||
-                type.equals(StructuralVariantType.INV)) {
+        if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.BND) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DEL) ||
+                type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.DUP) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CNV) ||
+                type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.INV) || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CTX)) {
             // SVCallRecord class can resolve these
             length = null;
         } else {
@@ -317,11 +319,8 @@ public final class SVCallRecordUtils {
 
         final String contigB;
         final int positionB;
-        if (type.equals(StructuralVariantType.BND)) {
-            // If END2 and CONTIG2 are both defined, use those.
-            // If neither is defined, use start contig and position.
-            // If only CONTIG2 is defined, END2 is taken as END
-            // Having only END2 but not CONTIG2 is unacceptable
+        if (type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.BND)
+                || type.equals(GATKSVVCFConstants.StructuralVariantAnnotationType.CTX)) {
             final boolean hasContig2 = variant.hasAttribute(GATKSVVCFConstants.CONTIG2_ATTRIBUTE);
             final boolean hasEnd2 = variant.hasAttribute(GATKSVVCFConstants.END2_ATTRIBUTE);
             if (!(hasContig2 && hasEnd2)) {
@@ -337,7 +336,7 @@ public final class SVCallRecordUtils {
         }
 
         final List<Allele> alleles;
-        if (type == StructuralVariantType.CNV) {
+        if (type == GATKSVVCFConstants.StructuralVariantAnnotationType.CNV) {
             alleles = new ArrayList<>(3);
             alleles.add(variant.getReference());
             alleles.add(Allele.SV_SIMPLE_DEL);
@@ -359,7 +358,7 @@ public final class SVCallRecordUtils {
         return newAttributes;
     }
 
-    private static Integer getLength(final VariantContext variant, final StructuralVariantType type) {
+    private static Integer getLength(final VariantContext variant, final GATKSVVCFConstants.StructuralVariantAnnotationType type) {
         Utils.nonNull(variant);
         Utils.validateArg(variant.hasAttribute(GATKSVVCFConstants.SVLEN), "Expected " + GATKSVVCFConstants.SVLEN + " field" + " for variant " + variant.getID());
         final int length = variant.getAttributeAsInt(GATKSVVCFConstants.SVLEN, UNDEFINED_LENGTH);
@@ -376,14 +375,13 @@ public final class SVCallRecordUtils {
         return variant.getAttributeAsStringList(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, null);
     }
 
-    private static String getStrands(final VariantContext variant, final StructuralVariantType type) {
+    private static String getStrands(final VariantContext variant, final GATKSVVCFConstants.StructuralVariantAnnotationType type) {
         Utils.nonNull(variant);
         Utils.nonNull(type);
         final String strandsAttr = variant.getAttributeAsString(GATKSVVCFConstants.STRANDS_ATTRIBUTE, null);
-        if (strandsAttr == null && type == StructuralVariantType.INV) {
+        if (strandsAttr == null) {
             return null;
         }
-        Utils.validateArg(strandsAttr != null, "Strands field not found for variant " + variant.getID() + " of type " + type);
         if (strandsAttr.length() != 2) {
             throw new IllegalArgumentException("Strands field is not 2 characters long for variant " + variant.getID());
         }
@@ -399,25 +397,29 @@ public final class SVCallRecordUtils {
     }
 
     /**
-     * Attempts to determine SV type from of a variant. If it is not explicitly available (i.e. through
-     * {@link VariantContext#getStructuralVariantType()}) then the type is inferred from the alt alleles. The only
-     * supported multi-allelic type is CNV when the alleles are DEL/DUP. Otherwise, a single symbolic alt allele is expected.
+     * Returns the SV class according to the SVTYPE field if available, else the alternate alleles.
      */
-    public static StructuralVariantType inferStructuralVariantType(final VariantContext variant) {
-        final StructuralVariantType type = variant.getStructuralVariantType();
-        if (type != null) {
-            return type;
+    public static GATKSVVCFConstants.StructuralVariantAnnotationType inferStructuralVariantType(final VariantContext variant) {
+        final String svType = variant.getAttributeAsString(GATKSVVCFConstants.SVTYPE, "");
+        if (VALID_TYPES.contains(svType)) {
+            return GATKSVVCFConstants.StructuralVariantAnnotationType.valueOf(svType);
         }
+        // Otherwise try to generate using the alleles
         final List<Allele> alleles = variant.getAlternateAlleles();
         Utils.validate(!alleles.isEmpty(), "Missing alt allele for variant " + variant.getID());
         if (alleles.size() == 2 && alleles.contains(GATKSVVCFConstants.DEL_ALLELE) && alleles.contains(GATKSVVCFConstants.DUP_ALLELE)) {
-            return StructuralVariantType.CNV;
+            return GATKSVVCFConstants.StructuralVariantAnnotationType.CNV;
         }
         Utils.validate(alleles.size() == 1, "Non-CNV multiallelic variants not supported (variant " + variant.getID() + ")");
         final Allele allele = alleles.get(0);
         Utils.validate(allele.isSymbolic(), "Expected symbolic alt allele");
         // TODO use htsjdk (see https://github.com/samtools/htsjdk/issues/18)
-        return StructuralVariantType.valueOf(allele.getDisplayString().replace("<", "").replace(">", ""));
+        final String alleleType = allele.getDisplayString().replace("<", "").replace(">", "");
+        if (VALID_TYPES.contains(alleleType)) {
+            return GATKSVVCFConstants.StructuralVariantAnnotationType.valueOf(alleleType);
+        } else {
+            throw new IllegalArgumentException("Could not find a valid SV type for variant " + variant.getID());
+        }
     }
 
     public static boolean containsAltAllele(final Genotype g) {
@@ -445,54 +447,15 @@ public final class SVCallRecordUtils {
      * Asserts presence of {@link GATKSVVCFConstants#EXPECTED_COPY_NUMBER_FORMAT} and
      * {@link GATKSVVCFConstants#COPY_NUMBER_FORMAT} attributes.
      */
-    public static void assertHasCopyStateFields(final Genotype g) {
-        Utils.nonNull(g);
-        if (!g.hasExtendedAttribute(GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT)) {
+    public static void assertHasCopyStateFields(final Genotype genotype) {
+        Utils.nonNull(genotype);
+        if (!genotype.hasExtendedAttribute(GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT)) {
             throw new IllegalArgumentException("Encountered missing " +
-                    GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT + " attribute in " + "genotype: " + g);
+                    GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT + " attribute in " + "genotype: " + genotype);
         }
-        if (!g.hasExtendedAttribute(GATKSVVCFConstants.COPY_NUMBER_FORMAT)) {
+        if (!genotype.hasExtendedAttribute(GATKSVVCFConstants.COPY_NUMBER_FORMAT)) {
             throw new IllegalArgumentException("Encountered missing " +
-                    GATKSVVCFConstants.COPY_NUMBER_FORMAT + " attribute in " + "genotype: " + g);
+                    GATKSVVCFConstants.COPY_NUMBER_FORMAT + " attribute in " + "genotype: " + genotype);
         }
-    }
-
-    /**
-     * Infers DUP genotype alleles based on copy number and ploidy, assuming single-copy DUP alleles.
-     * @param record
-     * @param logger if not null, log warning when genotype alleles could not be called
-     * @return copy of record with new genotypes
-     */
-    public static SVCallRecord convertToBiallelicDupGenotypes(final SVCallRecord record, final Logger logger) {
-        Utils.nonNull(record);
-        if (record.getType() != StructuralVariantType.DUP) {
-            return record;
-        }
-        final ArrayList<Genotype> newGenotypes = new ArrayList<>(record.getGenotypes().size());
-        for (final Genotype g : record.getGenotypes()) {
-            assertHasCopyStateFields(g);
-            final int expectedCopyNumber = VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.EXPECTED_COPY_NUMBER_FORMAT, -1);
-            final Integer copyNumber = VariantContextGetters.getAttributeAsInt(g, GATKSVVCFConstants.COPY_NUMBER_FORMAT, -1);
-            final List<Allele> genotypeAlleles = CanonicalSVCollapser.getCNVGenotypeAllelesFromCopyNumber(
-                    record.getAltAlleles(), record.getRefAllele(),
-                    expectedCopyNumber, copyNumber, true);
-            final Genotype newGenotype = new GenotypeBuilder(g).alleles(genotypeAlleles).make();
-            newGenotypes.add(newGenotype);
-            if (logger != null && newGenotype.isNoCall()) {
-                logger.warn("Genotype alleles in DUP record " + record.getId() +
-                        " on " + record.getContigA() + " could not be determined from copy number " +
-                        "info for sample " + g.getSampleName() + " with copy number " + copyNumber + " and ploidy " +
-                        expectedCopyNumber);
-            }
-        }
-        return copyCallWithNewGenotypes(record, GenotypesContext.create(newGenotypes));
-    }
-
-    /**
-     * Counts unique alleles in the given set of genotypes.
-     */
-    public static Map<Allele, Long> getAlleleCounts(final Collection<Genotype> genotypes) {
-        return genotypes.stream().map(Genotype::getAlleles).flatMap(Collection::stream)
-                .collect(Collectors.groupingBy(a -> a, Collectors.counting()));
     }
 }

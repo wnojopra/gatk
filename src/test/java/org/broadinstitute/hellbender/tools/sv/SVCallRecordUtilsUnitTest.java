@@ -54,7 +54,7 @@ public class SVCallRecordUtilsUnitTest {
         return new Object[][]{
                 // DEL
                 {
-                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                                 SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST,
                             ALLELES_DEL,
                             Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2),
@@ -64,13 +64,13 @@ public class SVCallRecordUtilsUnitTest {
                                 .genotypes(GENOTYPE_DEL_1, GENOTYPE_DEL_2)
                                 .attribute(VCFConstants.END_KEY, 1999)
                                 .attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST)
-                                .attribute(GATKSVVCFConstants.SVTYPE, StructuralVariantType.DEL)
+                                .attribute(GATKSVVCFConstants.SVTYPE, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL)
                                 .make(),
                         Collections.emptyList()
                 },
                 // DEL w/ null ref allele
                 {
-                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                                 SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST,
                                 Collections.singletonList(Allele.SV_SIMPLE_DEL),
                                 Collections.singletonList(GENOTYPE_DEL_3),
@@ -80,13 +80,13 @@ public class SVCallRecordUtilsUnitTest {
                                 .genotypes(GENOTYPE_DEL_3)
                                 .attribute(VCFConstants.END_KEY, 1999)
                                 .attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST)
-                                .attribute(GATKSVVCFConstants.SVTYPE, StructuralVariantType.DEL)
+                                .attribute(GATKSVVCFConstants.SVTYPE, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL)
                                 .make(),
                         Collections.emptyList()
                 },
                 // INS
                 {
-                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, StructuralVariantType.INS, 500,
+                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, GATKSVVCFConstants.StructuralVariantAnnotationType.INS, 500,
                                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                                 ALLELES_INS,
                                 Lists.newArrayList(GENOTYPE_INS_1),
@@ -96,13 +96,13 @@ public class SVCallRecordUtilsUnitTest {
                                 .genotypes(GENOTYPE_INS_1)
                                 .attribute(VCFConstants.END_KEY, 1000)
                                 .attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, SVTestUtils.PESR_ONLY_ALGORITHM_LIST)
-                                .attribute(GATKSVVCFConstants.SVTYPE, StructuralVariantType.INS)
+                                .attribute(GATKSVVCFConstants.SVTYPE, GATKSVVCFConstants.StructuralVariantAnnotationType.INS)
                                 .make(),
                         Collections.emptyList()
                 },
                 // INS, undefined length
                 {
-                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, StructuralVariantType.INS, null,
+                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, GATKSVVCFConstants.StructuralVariantAnnotationType.INS, null,
                                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                                 ALLELES_INS,
                                 Lists.newArrayList(GENOTYPE_INS_1),
@@ -112,13 +112,13 @@ public class SVCallRecordUtilsUnitTest {
                                 .genotypes(GENOTYPE_INS_1)
                                 .attribute(VCFConstants.END_KEY, 1000)
                                 .attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, SVTestUtils.PESR_ONLY_ALGORITHM_LIST)
-                                .attribute(GATKSVVCFConstants.SVTYPE, StructuralVariantType.INS)
+                                .attribute(GATKSVVCFConstants.SVTYPE, GATKSVVCFConstants.StructuralVariantAnnotationType.INS)
                                 .make(),
                         Collections.emptyList()
                 },
                 // BND
                 {
-                        new SVCallRecord("var3", "chr1", 1000, false, "chr2", 1999, true, StructuralVariantType.BND, null,
+                        new SVCallRecord("var3", "chr1", 1000, false, "chr2", 1999, true, GATKSVVCFConstants.StructuralVariantAnnotationType.BND, null,
                                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                                 ALLELES_BND,
                                 Lists.newArrayList(GENOTYPE_BND_1),
@@ -129,7 +129,7 @@ public class SVCallRecordUtilsUnitTest {
                                 .attribute(VCFConstants.END_KEY, 1000)
                                 .attribute(GATKSVVCFConstants.ALGORITHMS_ATTRIBUTE, SVTestUtils.PESR_ONLY_ALGORITHM_LIST)
                                 .attribute(GATKSVVCFConstants.STRANDS_ATTRIBUTE, "-+")
-                                .attribute(GATKSVVCFConstants.SVTYPE, StructuralVariantType.BND)
+                                .attribute(GATKSVVCFConstants.SVTYPE, GATKSVVCFConstants.StructuralVariantAnnotationType.BND)
                                 .attribute(GATKSVVCFConstants.CONTIG2_ATTRIBUTE, "chr2")
                                 .attribute(GATKSVVCFConstants.END2_ATTRIBUTE, 1999)
                                 .make(),
@@ -167,7 +167,7 @@ public class SVCallRecordUtilsUnitTest {
 
         final GenotypeBuilder builder1a = new GenotypeBuilder("sample1");
         final SVCallRecord record1 = SVTestUtils.makeRecord("record1", "chr20", 1000, true,
-                "chr20", 2000, false, StructuralVariantType.DEL, null,
+                "chr20", 2000, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, null,
                 Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM), Lists.newArrayList(Allele.REF_N, Allele.SV_SIMPLE_DEL),
                 Lists.newArrayList(new GenotypeBuilder(GENOTYPE_DEL_1), new GenotypeBuilder(GENOTYPE_DEL_2)));
         final GenotypesContext resultNoMissing = SVCallRecordUtils.populateGenotypesForMissingSamplesWithAlleles(
@@ -204,14 +204,14 @@ public class SVCallRecordUtilsUnitTest {
 
     @Test
     public void testCopyCallWithNewGenotypes() {
-        final SVCallRecord record = new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+        final SVCallRecord record = new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                 SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST,
                 ALLELES_DEL,
                 Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2),
                 Collections.singletonMap(GATKSVVCFConstants.CLUSTER_MEMBER_IDS_KEY, Collections.singletonList("sample")));
         final GenotypesContext genotypes = GenotypesContext.copy(Collections.singletonList(GENOTYPE_DEL_3));
         final SVCallRecord result = SVCallRecordUtils.copyCallWithNewGenotypes(record, genotypes);
-        final SVCallRecord expected = new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+        final SVCallRecord expected = new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                 SVTestUtils.DEPTH_ONLY_ALGORITHM_LIST,
                 ALLELES_DEL,
                 genotypes,
@@ -241,11 +241,11 @@ public class SVCallRecordUtilsUnitTest {
                 },
                 {
                         SVTestUtils.newCallRecordWithCoordinates("var1", "chr1", 1000, "chr1", 1999),
-                        SVTestUtils.newCallRecordWithCoordinatesAndType("var2", "chrX", 1000, "chr1", 1999, StructuralVariantType.BND),
+                        SVTestUtils.newCallRecordWithCoordinatesAndType("var2", "chrX", 1000, "chr1", 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.BND),
                         -1
                 },
                 {
-                        SVTestUtils.newCallRecordWithCoordinatesAndType("var1", "chrX", 1000, "chr1", 1999, StructuralVariantType.BND),
+                        SVTestUtils.newCallRecordWithCoordinatesAndType("var1", "chrX", 1000, "chr1", 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.BND),
                         SVTestUtils.newCallRecordWithCoordinates("var2", "chr1", 1000, "chr1", 1999),
                         1
                 },
@@ -261,11 +261,11 @@ public class SVCallRecordUtilsUnitTest {
                 },
                 {
                         SVTestUtils.newCallRecordWithCoordinates("var1", "chr1", 1000, "chr1", 1999),
-                        SVTestUtils.newCallRecordWithCoordinatesAndType("var2", "chr1", 1000, "chrX", 1999, StructuralVariantType.BND),
+                        SVTestUtils.newCallRecordWithCoordinatesAndType("var2", "chr1", 1000, "chrX", 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.BND),
                         -1
                 },
                 {
-                        SVTestUtils.newCallRecordWithCoordinatesAndType("var1", "chr1", 1000, "chrX", 1999, StructuralVariantType.BND),
+                        SVTestUtils.newCallRecordWithCoordinatesAndType("var1", "chr1", 1000, "chrX", 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.BND),
                         SVTestUtils.newCallRecordWithCoordinates("var2", "chr1", 1000, "chr1", 1999),
                         1
                 },
@@ -323,19 +323,19 @@ public class SVCallRecordUtilsUnitTest {
                 },
                 // SV type
                 {
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, StructuralVariantType.DEL),
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, StructuralVariantType.DUP),
-                        StructuralVariantType.DEL.compareTo(StructuralVariantType.DUP)
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL),
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.DUP),
+                        GATKSVVCFConstants.StructuralVariantAnnotationType.DEL.compareTo(GATKSVVCFConstants.StructuralVariantAnnotationType.DUP)
                 },
                 {
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, StructuralVariantType.DUP),
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, StructuralVariantType.DEL),
-                        StructuralVariantType.DUP.compareTo(StructuralVariantType.DEL)
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.DUP),
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL),
+                        GATKSVVCFConstants.StructuralVariantAnnotationType.DUP.compareTo(GATKSVVCFConstants.StructuralVariantAnnotationType.DEL)
                 },
                 {
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1000, StructuralVariantType.BND),
-                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1000, StructuralVariantType.INS),
-                        StructuralVariantType.BND.compareTo(StructuralVariantType.INS)
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1000, GATKSVVCFConstants.StructuralVariantAnnotationType.BND),
+                        SVTestUtils.newCallRecordWithIntervalAndType(1000, 1000, GATKSVVCFConstants.StructuralVariantAnnotationType.INS),
+                        GATKSVVCFConstants.StructuralVariantAnnotationType.BND.compareTo(GATKSVVCFConstants.StructuralVariantAnnotationType.INS)
                 }
         };
     }
@@ -347,13 +347,13 @@ public class SVCallRecordUtilsUnitTest {
 
     @Test
     public void testConvertInversionsToBreakends() {
-        final SVCallRecord nonInversion = SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, StructuralVariantType.DEL);
+        final SVCallRecord nonInversion = SVTestUtils.newCallRecordWithIntervalAndType(1000, 1999, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL);
         final List<SVCallRecord> nonInversionResult = SVCallRecordUtils.convertInversionsToBreakends(nonInversion, SVTestUtils.hg38Dict).collect(Collectors.toList());
         Assert.assertEquals(nonInversionResult.size(), 1);
         Assert.assertNotNull(nonInversionResult.get(0));
         SVTestUtils.assertEqualsExceptMembership(nonInversionResult.get(0), nonInversion);
 
-        final SVCallRecord inversion = new SVCallRecord("", "chr1", 1000, true, "chr1", 1999, true, StructuralVariantType.INV, 1000,
+        final SVCallRecord inversion = new SVCallRecord("", "chr1", 1000, true, "chr1", 1999, true, GATKSVVCFConstants.StructuralVariantAnnotationType.INV, 1000,
                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -365,8 +365,8 @@ public class SVCallRecordUtilsUnitTest {
         final SVCallRecord bnd2 = inversionResult.get(1);
         Assert.assertNotNull(bnd1);
         Assert.assertNotNull(bnd2);
-        Assert.assertEquals(bnd1.getType(), StructuralVariantType.BND);
-        Assert.assertEquals(bnd2.getType(), StructuralVariantType.BND);
+        Assert.assertEquals(bnd1.getType(), GATKSVVCFConstants.StructuralVariantAnnotationType.BND);
+        Assert.assertEquals(bnd2.getType(), GATKSVVCFConstants.StructuralVariantAnnotationType.BND);
         Assert.assertNull(bnd1.getLength());
         Assert.assertNull(bnd2.getLength());
         Assert.assertEquals(bnd1.getStrandA(), bnd1.getStrandB());
@@ -425,38 +425,38 @@ public class SVCallRecordUtilsUnitTest {
                 {
                     SVTestUtils.newVariantContext("var1", "chr1", 1000, 1999,
                             ALLELES_DEL, Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2), 1000, "+-",
-                            StructuralVariantType.DEL, Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM),
+                            GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM),
                             null, null,
                             TEST_ATTRIBUTES),
-                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                             Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM), ALLELES_DEL, Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2),
                                 TEST_ATTRIBUTES)
                 },
                 {
                         SVTestUtils.newVariantContext("var1", "chr1", 1000, 1999,
                                 ALLELES_DEL, Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2), 1000, "+-",
-                                StructuralVariantType.DEL, Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM),
+                                GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM),
                                 null, null,
                                 TEST_ATTRIBUTES),
-                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, StructuralVariantType.DEL, 1000,
+                        new SVCallRecord("var1", "chr1", 1000, true, "chr1", 1999, false, GATKSVVCFConstants.StructuralVariantAnnotationType.DEL, 1000,
                                 Collections.singletonList(GATKSVVCFConstants.DEPTH_ALGORITHM), ALLELES_DEL, Lists.newArrayList(GENOTYPE_DEL_1, GENOTYPE_DEL_2),
                                 TEST_ATTRIBUTES)
                 },
                 {
                         SVTestUtils.newVariantContext("var2", "chr1", 1000, 1000,
                                 ALLELES_INS, Lists.newArrayList(GENOTYPE_INS_1, GENOTYPE_INS_2), 500, "+-",
-                                StructuralVariantType.INS, SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
+                                GATKSVVCFConstants.StructuralVariantAnnotationType.INS, SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                                 null, null, TEST_ATTRIBUTES),
-                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, StructuralVariantType.INS, 500,
+                        new SVCallRecord("var2", "chr1", 1000, true, "chr1", 1000, false, GATKSVVCFConstants.StructuralVariantAnnotationType.INS, 500,
                                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST, ALLELES_INS, Lists.newArrayList(GENOTYPE_INS_1, GENOTYPE_INS_2),
                                 TEST_ATTRIBUTES)
                 },
                 {
                         SVTestUtils.newVariantContext("var3", "chr1", 1000, 1000,
                                 ALLELES_BND, Collections.singletonList(GENOTYPE_BND_1), null, "++",
-                                StructuralVariantType.BND, SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
+                                GATKSVVCFConstants.StructuralVariantAnnotationType.BND, SVTestUtils.PESR_ONLY_ALGORITHM_LIST,
                                 "chrX", 2000, TEST_ATTRIBUTES),
-                        new SVCallRecord("var3", "chr1", 1000, true, "chrX", 2000, true, StructuralVariantType.BND, null,
+                        new SVCallRecord("var3", "chr1", 1000, true, "chrX", 2000, true, GATKSVVCFConstants.StructuralVariantAnnotationType.BND, null,
                                 SVTestUtils.PESR_ONLY_ALGORITHM_LIST, ALLELES_BND, Collections.singletonList(GENOTYPE_BND_1),
                                 TEST_ATTRIBUTES)
                 },

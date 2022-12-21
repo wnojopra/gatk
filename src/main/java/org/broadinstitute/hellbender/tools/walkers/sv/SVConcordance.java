@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.sv;
 
+import com.google.common.collect.Sets;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
@@ -26,6 +27,9 @@ import org.broadinstitute.hellbender.tools.sv.concordance.SVConcordanceAnnotator
 import org.broadinstitute.hellbender.tools.sv.concordance.SVConcordanceLinkage;
 import org.broadinstitute.hellbender.tools.walkers.validation.Concordance;
 import picard.vcf.GenotypeConcordance;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>This tool calculates SV genotype concordance between an "evaluation" VCF and a "truth" VCF.</p>
@@ -70,7 +74,6 @@ import picard.vcf.GenotypeConcordance;
 public final class SVConcordance extends AbstractConcordanceWalker {
 
     public static final String USE_TRUTH_AF_LONG_NAME = "use-truth-af";
-    public static final String BIALLELIC_DUPLICATIONS_LONG_NAME = "force-biallelic-dups";
 
     @Argument(
             doc = "Output VCF",
@@ -80,7 +83,7 @@ public final class SVConcordance extends AbstractConcordanceWalker {
     private GATKPath outputFile;
 
     /**
-     * By default, truth allele frequencies are calculated on the fly, using the evaluation record's allele number as the
+     * By default, truth allele frequencies are calculated on the fly using the evaluation record's allele number as the
      * denominator. This option forces the tool to use the allele frequency annotations (AF/AN/AC) of the closest-
      * matching truth variant record (by min distance to both breakpoints) for truth allele frequency annotations.
      */
@@ -90,23 +93,6 @@ public final class SVConcordance extends AbstractConcordanceWalker {
             optional = true
     )
     private boolean useTruthAf = false;
-
-    /**
-     * By default, the tool assumes that DUP records have multi-copy alleles (i.e. with a 1-copy allele, 2-copy allele,
-     * etc.). In this case, a genotype's alleles cannot be inferred when the copy number greater than 1 + the
-     * sample ploidy, and the tool will treat the genotype as a no-call. For example, a genotype with
-     * ECN=2 and CN=4 will be treated as a no-call (./.) since this copy state correspond to either a homozygous 1-copy or
-     * heterozygous 2-copy / reference genotype. This option overrides that behavior by assuming only a 1-copy allele
-     * and can therefore infer the genotype allele for cases where the copy number is greater than 1 + the ploidy.
-     * In the previous example, the genotype would be treated as homozygous (1/1). Note that in cases where the copy
-     * number is more than twice the ploidy, the genotype is treated as homozygous.
-     */
-    @Argument(
-            doc = "Interpret duplication alleles as single-copy when inferring genotypes from copy number",
-            fullName = BIALLELIC_DUPLICATIONS_LONG_NAME,
-            optional = true
-    )
-    private boolean biallelicDups = false;
 
     @ArgumentCollection
     private final SVClusterEngineArgumentsCollection clusterParameterArgs = new SVClusterEngineArgumentsCollection();
@@ -125,6 +111,7 @@ public final class SVConcordance extends AbstractConcordanceWalker {
         if (dictionary == null) {
             throw new UserException("Reference sequence dictionary required");
         }
+        validateHeaders();
 
         linkage = new SVConcordanceLinkage(dictionary);
         linkage.setDepthOnlyParams(clusterParameterArgs.getDepthParameters());
@@ -136,6 +123,14 @@ public final class SVConcordance extends AbstractConcordanceWalker {
 
         writer = createVCFWriter(outputFile);
         writer.writeHeader(createHeader(getEvalHeader()));
+    }
+
+    private void validateHeaders() {
+        final Set<String> truthSamples = new HashSet<>(getTruthHeader().getSampleNamesInOrder());
+        final Set<String> evalSamples = new HashSet<>(getEvalHeader().getSampleNamesInOrder());
+        if (!Sets.difference(truthSamples, evalSamples).isEmpty()) {
+            throw new UserException.BadInput("Truth vcf samples must be a subset of eval vcf samples");
+        }
     }
 
     @Override
@@ -167,9 +162,6 @@ public final class SVConcordance extends AbstractConcordanceWalker {
         if (!record.getContigA().equals(currentContig)) {
             flushClusters(true);
             currentContig = record.getContigA();
-        }
-        if (biallelicDups) {
-            record = SVCallRecordUtils.convertToBiallelicDupGenotypes(record, this.logger);
         }
         engine.add(record, isTruth);
         flushClusters(false);
