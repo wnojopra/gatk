@@ -90,6 +90,8 @@ task AssignIds {
   String bq_labels = "--label service:gvs --label team:variants --label managedby:assign_ids"
 
   command <<<
+    set -o nounset
+    set -o pipefail
     set -e
     set -x
 
@@ -125,7 +127,8 @@ task AssignIds {
       'INSERT into `~{dataset_name}.~{sample_info_table}` (sample_name, is_control) select sample_name, ~{samples_are_controls} from `~{dataset_name}.sample_id_assignment_lock` m where m.sample_name not in (SELECT sample_name FROM `~{dataset_name}.~{sample_info_table}`)'
 
     # get the current maximum id, or 0 if there are none
-    bq --project_id=~{project_id} query --format=csv --use_legacy_sql=false ~{bq_labels} 'SELECT IFNULL(MAX(sample_id),0) FROM `~{dataset_name}.~{sample_info_table}`' > maxid
+    bq --project_id=~{project_id} query --format=csv --use_legacy_sql=false ~{bq_labels} 'SELECT IFNULL(MAX(sample_id),0) FROM `~{dataset_name}.~{sample_info_table}`' | tee maxid
+    echo "Calculating offset..."
     offset=$(tail -1 maxid)
 
     # perform actual id assignment
