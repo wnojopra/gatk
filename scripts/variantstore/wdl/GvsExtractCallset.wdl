@@ -303,6 +303,7 @@ task ExtractTask {
         --wdl-step GvsCreateCallset \
         --wdl-call ExtractTask \
         --shard-identifier ~{intervals_name} \
+        --print-debug-information \
         ~{cost_observability_line}
 
     # Drop trailing slash if one exists
