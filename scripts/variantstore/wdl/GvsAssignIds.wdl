@@ -140,7 +140,8 @@ task AssignIds {
 
     # get the max id to create tables for
     max_sample_id=$(cat update.tsv | cut -d, -f2 | sort -r -n | head -1)
-    python3 -c "from math import ceil; print(ceil($max_sample_id/~{samples_per_table}))" > max_table_id
+    # Commenting out the next line because for some reason cromwell is trying to delocalize a file named max_table_id
+    # python3 -c "from math import ceil; print(ceil($max_sample_id/~{samples_per_table}))" > max_table_id
 
     # remove the lock table
     bq --project_id=~{project_id} rm -f -t ~{dataset_name}.sample_id_assignment_lock
@@ -153,7 +154,7 @@ task AssignIds {
   }
   output {
     File gvs_ids_tsv = "gvs_ids.tsv"
-    Int max_table_id = read_int("max_table_id")
+    Int max_table_id = 1
   }
 }
 
