@@ -118,6 +118,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - rsa_1000G_extract_issues
    - name: GvsImportGenomes
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsImportGenomes.wdl
@@ -157,6 +158,7 @@ workflows:
        branches:
          - master
          - ah_var_store
+         - rsa_1000G_extract_issues
    - name: GvsWithdrawSamples
      subclass: WDL
      primaryDescriptorPath: /scripts/variantstore/wdl/GvsWithdrawSamples.wdl
